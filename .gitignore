@@ -1,0 +1,21 @@
+# LaTeX build artifacts
+build/
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+main.pdf
+supplement.pdf
+# Never commit patient data
+*.npz
+*.nii
+*.nii.gz
+*.mhd
+*.raw
+*.dcm
+data/
+__pycache__/

@@ -1,0 +1,131 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[review]{cvpr}
+\input{shared}
+\usepackage{float}
+\def\paperID{}
+\def\confName{CVPR}
+\def\confYear{2027}
+\title{Restoring Native CT Evidence at Fixed Proposals for Lung Nodule Ranking\\Supplementary Material}
+\author{Anonymous CVPR submission}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thetable}{S\arabic{table}}
+
+\begin{document}
+\maketitle
+
+\section{Cohort, roles and external eligibility}
+\label{supp:roles}
+\input{tables/roles}
+
+The LUNA16 false-positive reduction release provides the V2 proposals and reference files~\cite{setio2017luna16}. Its included nodules are at least $3\mm$ and accepted by at least three readers under the benchmark definition~\cite{setio2017luna16,armato2011lidc}. We preserve every original proposal at its physical coordinates. Roles use the LIDC patient crosswalk. The two scans of a repeated subject in subsets 1 and 6 are excluded from fitting and evaluation. All remaining scans have one unique patient. The evaluation pools subsets 6--7 and 8--9 and retains all lesions outside the proposal ceiling. Earlier related crop experiments included all nodule-bearing scans in this evaluation pool. Prior work on LUNA16 and LUNA25 also informed the hypothesis. Patient-disjoint current roles and frozen choices protect comparisons between these fits on the reused benchmark.
+
+\paragraph{Eligibility recheck.}
+We sought an untouched cohort with scan-level coverage, usable included and excluded detection references, and a proposal protocol that could be fixed without consulting outcomes. LNDb has 236 public training scans and 58 reserved test scans~\cite{pedrosa2021lndb}. The reserve image archives were range-readable. Its public reserve coordinates are intended for segmentation and mix target findings with decoys, while complete detection labels are withheld. Earlier related work used the 177 public training scans with multiple reads. The other 59 public scans have one reader, below the reference criterion used here.
+
+LIDC-annot-NLST501 supplies four reads per scan and a corrected series crosswalk~\cite{nlst501reference}. We reconciled all 501 subject/series keys with available exposure inventories. The public LUNA25 roster overlaps by 112 patients, including 55 exact original-series overlaps. A further 71 patients are excluded based on prior detector validation, with 140 such patients in the full 501-case roster before the LUNA25 exclusion. The remaining 318 cases lack a verified crosswalk to the separate hidden LUNA25 tuning partition~\cite{peeters2025protocol}. This prevents verification that the remaining set is untouched.
+
+The Duke screening dataset uses report-informed annotation, assisted by a detector with manual review and additions~\cite{wang2025duke}. Our file listings required access, and the local inventories could not establish a complete detection reference or an eligible untouched roster. Lung TIME contains mostly adolescent metastasis workups and nine adult scans during treatment. We could not verify a usable full reference and archive for this comparison~\cite{dolejsi2009time}. ANODE09 challenge evaluation withholds the reference for direct all-proposal analysis. We used no external outcomes. The frozen single-stream 3D experiment instead varies architecture on the original proposals and patients.
+
+\section{Construction and training details}
+\label{supp:construction}
+
+\paragraph{Native access checks.}
+For a trilinear query $q$, each native source $v$ with positive weight has $\lVert v-q\rVert\leq d$, where $d$ is the diagonal given by the three native voxel spacings. Orthogonality of the native direction matrix preserves this physical bound. The near and far queries therefore use sources in $[r_N-d,r_F+d]$ about the proposal. Since $r_N-d\geq10.05\mm$, the source union is disjoint from the native ball. Out-of-field queries return fixed air. The cropped masking implementation leaves a native guard for interpolation. The model receives clipped and quantized intensities without a separate binary visibility channel.
+
+We checked nine rotated, reflected, anisotropic or boundary settings against literal full-volume masking. Randomizing 485,801 hidden values left the resulting crops and endpoint/floor observations unchanged. The footprint check covered 15,664 positive-weight interpolation contributions in these settings. The additional source-union implementation passed nine equivalent literal-mask and hidden-source checks. For every released proposal, it verified endpoint agreement before quantizing the crop and recomputed the median floor from the subset of endpoints. A retained source reaches the centered crop if each coordinate has an in-bounds grid query strictly less than one native voxel step away. This follows from separability and positive trilinear weights. We checked this count against explicit grid-neighbor enumeration on the fixtures.
+
+The preaugmentation cache spans $37.2\mm$ from the first to the last of 32 sample centers on each axis. Inference takes the centered $28^3$ subgrid. The two-scale model processes a central $16^3$ view and a $14^3$ average-pooled context view. Each stream has a $3^3$ stem with 16 channels and three stride-two stages of widths 32, 64 and 96. Mean and max statistics feed a 96-unit projection with layer normalization, SiLU and dropout 0.25. The resulting image scorer has 1,283,873 parameters. The three-view model takes six central slices per orientation. It shares a 2D view encoder and concatenates its three mean/max summaries.
+
+The single-stream 3D model rearranges each nonoverlapping $2^3$ neighborhood into eight channels at the $14^3$ grid without averaging. A 32-channel convolutional stem is followed by residual blocks of widths 32, 64 and 96 with strides $1,2,2$. The blocks use two $3^3$ convolutions and a projection shortcut when dimensions change. Pooled mean and max features from the last two stages feed a 96-unit projection and scalar classifier. There are 683,265 parameters. We used the original seed 3691 for the single-stream and native-source arms.
+
+\paragraph{Training and selection.}
+All standalone models use 48 epochs of 160 batches with 24 positives and 104 negatives per batch. Label fitting honors strict reference matches. Ambiguous benchmark positives and excluded findings are ignored for negative sampling. Each training crop uses a uniform discrete shift of zero to four grid steps from the cache corner, in-plane right-angle rotations, independent flips, and intensity gain and offset jitter. The native visibility mask is applied before these transformations. Optimization uses AdamW with base learning rate 0.0018, a cosine decay to a 0.12 fraction of that rate, weight decay 0.012 and bfloat16 GPU computation. Every fourth epoch we score all checkpoint-role proposals and select maximum capped standalone CPM with earliest epoch breaking ties. We refresh the 16,000 training negatives with highest standalone scores at those epochs except the final one. Subsequent minibatches draw half their negatives from this pool.
+
+The new sparse heads take the unaugmented centered logit and the unaugmented endpoint readings. They share 24 epochs of the same batch size and optimization schedule shape. The hard-negative pool is derived once per seed from the frozen ball scorer. Each branch is selected by complete checkpoint-role CPM every four epochs, earliest tie. The direction-blind and direction-aware pair at width 48 each have 53,977 parameters. Their width-96 counterparts each have 212,785. The 873-parameter compact logit head is refitted with the same train batches. The attention blocks use pre-normalization, four heads and a two-layer feedforward expansion by a factor of two. Symmetric mean and max pool the final normalized tokens. A width-matched projection of the clipped raw logit $i$ and the exterior vector $e$ enter an MLP on $[i,e,i\odot e]$. It predicts a scalar residual. A zero-initialized final layer starts each refit at the standalone logit. The shared token permutation moves both axes of the directional bias matrix together with the observations. A fixture confirms that jointly permuting the input and bias preserves the spatial encoding, while scrambling the input alone can change it. The blind encoding is invariant to either permutation, and both heads are invariant to swapping the two arms of a row.
+
+\paragraph{Original compact readouts.}
+Let $s$ be the standalone logit and $z$ its penultimate embedding. The logit pathway uses $B_L=s$ and the embedding pathway uses its separately trained image-only score $B_E=s+q(z)$. A scalar or endpoint residual is added to its own baseline. Every branch uses the same 8-wide interior and exterior projections and a 16-wide SiLU MLP on the two projections and their elementwise product. The scalar and morphology alternatives represent a scalar as a degenerate one-row set. The paired, unpaired and sham arms use matched tensor sizes. The embedding residual has 1,633 parameters. Gradients from these losses stop at the detached image features and the relevant image-only score. The compact heads train alongside the original image trajectory and use its standalone checkpoint and mining stream. Their query arrays stay at the original proposal during training. The separate refits described above keep both modalities at the same centered, unaugmented pose.
+
+The learned sham rearranges whole opposing arms, preserving both radii within an arm. A seeded assignment bank of 512 bijections imposes at least $45^\circ$ of undirected separation between source and destination axes. Neither axis identity nor the chosen permutation reaches the network. The unpaired control self-pairs each arm. The matched synthetic fixture uses identical scalar values and arm marginals and distinct directional clusters across fitting and evaluation. The paired head reaches 100\% accuracy on 320 held-out examples, while each of eight sham draws and the unpaired head reach 50\%. These examples test pairing integrity. They supply no patient performance evidence.
+
+\section{Locked effects, uncertainty and operating points}
+\label{supp:locked}
+
+\paragraph{Reference FROC.}
+A mark matches when its squared distance is strictly below the squared half-diameter. A missing diameter uses the release's $10\mm$ default. We credit the highest kept score per lesion, exempt marks that match only excluded findings, and remove duplicates as separate detections. The original V2 stream has \EvalMarks{} proposals and the reference has \EvalLesions{} lesions. The uncapped proposal ceiling is \ProposedLesions{} lesions. The released evaluator agrees on the matched rates and audit counts for representative score streams under both the 100-mark cap and uncapped evaluation. Representative scores from each new comparison also reproduce released-evaluator rates and counts under both cap settings. Capping is score-dependent and can change which lesion matches remain.
+
+For each patient bootstrap sample, FROC accumulates the best matching score per lesion and false-proposal score events on the complete scan stream, including ties. Sensitivity at each target uses the same interpolation as the release. The paired changes recompute both models at a common target within a draw. In the original design, CPM intervals for restored-minus-ball, endpoint-minus-scalar at fixed logit, and embedding-minus-logit endpoint gain form one three-contrast family. The primary seed is 3691. We use Bonferroni-adjusted 98.33\% marginal percentile intervals for that family. Pointwise percentile intervals use 95\% coverage and 2,000 patient draws with seed 93041. These draws pair methods within patients and leave the trained weights fixed. For the recovery fraction, we divide by the full-minus-ball CPM gap in each draw where that gap is positive.
+
+\paragraph{Cutoffs.}
+The empirical illustration takes the strict threshold above the $(n+1)$th highest false score in the evaluation stream, where $n$ is the scan count. This can leave fewer than $n$ false marks in the presence of ties. Threshold transfer takes that strict rule in the separate calibration role and applies the fixed cutoff to the evaluation stream. Cutoffs are locked independently for each score and cap condition. Achieved FP burdens are reported alongside sensitivities. We use matched $S_1$ for equal-burden ranking comparisons. Table~\ref{tab:transfer} gives the threshold analysis for the image arms. The accompanying aggregate file retains all absolute, paired and threshold outcomes.
+
+
+\paragraph{Factorial and practical rules.}
+The original fusion-development role selected logit conditioning by average endpoint gain across the two image seeds. The strongest full-context morphology term by average CPM was the gray-shell positive mean, compared with the gray maximum and unpaired alternatives. The shell comparator summarizes grayscale dilation around an image-derived bright component inside the lung~\cite{leemput2015shell}. Its conditional endpoint and sham heads share that frozen base score. The practical rule requires at least one CPM point and one matched $S_1$ point of observed gain, positive lower bounds for both, a positive comparison with correspondence controls, and no interval lower endpoint below $-2$ sensitivity points at the lowest three rates. The primary fit clears the low-rate margin and the second has possible harm at $0.125$ FP/scan. Both CPM upper bounds are below the $+1$ point target. Tables~\ref{tab:locked_factorial}--\ref{tab:locked_practical} separate this bounded result from the estimates of representation and conditioning. The active sparse fits are shown throughout. The optional development choice of a zero residual is recorded separately in the aggregate input.
+
+\section{Post-review matched comparisons}
+\label{supp:new}
+
+The exact query-source control exposes additional native information to the original image encoder. Its score is learned from that visibility condition with the same architecture, optimizer and standalone checkpoint rule. The width and directional tests in Tables~\ref{tab:attention_gains}--\ref{tab:attention_absolute} use the very same 384 interpolated readings as the archived late head. These comparisons ask distinct questions. The former changes native coverage at a fixed point of image entry. The latter isolates angular structure and capacity at fixed sparse access and score fusion. Each two-seed sparse result has separate head and image weights by seed. The single-stream and native-source arms each add one fixed training seed.
+
+For the single-stream comparison, the full-visibility model was required to meet 80\% CPM on both development roles for a competent reference. Table~\ref{tab:new_dev} records both. The single-stream gain at matched 1 FP/scan is imprecise, while its CPM gain is positive with a pointwise interval above zero. We retain all capped and uncapped results, both subset-group results, all seven matched target rates, and transferred cutoff outcomes for all arms in the aggregate input.
+
+\section{All-proposal contour grouping}
+\label{supp:contour}
+
+We verify the series and study crosswalk, reader contour slice positions and native physical orientation. Inclusion polygons are rasterized on the native grid, with the corresponding reader exclusion polygons removed. Spatial consistency links a reader's lesion to a unique reference finding. A voxel must appear in strictly more than half of the linked masks to count as majority-labeled. Every linked evaluation lesion has at least two usable readers. We recompute exact strict matches from the release coordinates before consulting scores and reconcile all 604 reference--proposal pairs with the archived contour inventory. The 598 pairs with contour linkage give the same overlap labels for the native band and the native sources that can reach the centered crop. For grouping, the union is across all matched proposals regardless of their scores.
+
+In each patient draw, the all-scan false-proposal count and that model's scores supply the FROC axis. The four group event counts use identical ties and interpolation abscissae. Interpolated group counts sum to the full FROC numerator at every target. A group contributes a defined sensitivity in draws containing at least one of its lesions. Results for the two small coverage or linkage groups are descriptive, and bootstrap draws without a lesion in the relevant group are omitted for its interval. The six linked lesions outside proposal coverage always contribute zero localizations and remain in the full denominator. The reported overlap-minus-never effect is a paired difference of subgroup gains, with a separate denominator for each group.
+
+The earlier selected-mark audit is descriptive. At a discrete cutoff a lesion is credited to its highest-scoring retained matching mark. A retained lesion can switch marks across models. The audit tabulates whether the decision mark's band intersects the contour, whereas the all-proposal analysis uses a fixed anatomy group independent of the score. Changed false marks show changes in bright-arm support. Without adjudicated vascular labels, these measurements describe attenuation patterns.
+
+\section{Historical checks and reproducibility}
+\label{supp:repro}
+
+Earlier Hessian and visibility comparisons on this benchmark are retained as context in Table~\ref{tab:historical}. The Hessian procedure samples opposing chords through a Hessian-selected interior anchor, with the query spheres still centered at the proposal. Its pairing result concerns that classical ranker and construction. We verified all seven historical rate estimates and intervals against the saved complete streams. The original 3D ball and full image checkpoints and their development scores were also verified against the earlier archived fits.
+
+The anonymous source includes a self-contained figure and table renderer and aggregate inputs. The aggregates include the evaluated rates, effects, uncertainty, fit summaries and denominators needed for regeneration. Private execution manifests bind exact CT and cache bytes, released coordinates, patient-disjoint roles, checkpoint selections and score exports. New source, spatial and architecture comparisons froze their choices before calibration and reuse scoring. The post-review contour groups were frozen before score linkage. Model thresholds, proposal streams and raw reader records are kept separately from the review package.
+
+\section*{LLM Usage Statement}
+\input{LLM_Usage_Statement.txt}
+{\small
+\bibliographystyle{ieeenat_fullname}
+\bibliography{references}
+}
+
+\onecolumn
+\section{Detailed results tables}
+\subsection*{Absolute visibility and paired operating points}
+\input{tables/absolute}
+\input{tables/paired_rates}
+
+\clearpage
+\subsection*{Within-benchmark checks and calibration transfer}
+\input{tables/consistency}
+\input{tables/transfer}
+
+\clearpage
+\subsection*{Original factorial, correspondence and practical controls}
+\input{tables/locked_factorial}
+\input{tables/locked_compact}
+\input{tables/locked_practical}
+\input{tables/sham_spread}
+
+\clearpage
+\subsection*{Post-review development and controlled sparse comparisons}
+\input{tables/new_dev}
+\input{tables/attention_contrasts}
+\input{tables/attention_gains}
+
+\clearpage
+\subsection*{Absolute sparse performance and all-proposal geometry}
+\input{tables/attention_absolute}
+\input{tables/anatomy_counts}
+\input{tables/anatomy_capped}
+
+\clearpage
+\subsection*{Uncapped anatomy, selected decisions and historical comparisons}
+\input{tables/anatomy_uncapped}
+\input{tables/decision}
+\input{tables/historical}
+\end{document}

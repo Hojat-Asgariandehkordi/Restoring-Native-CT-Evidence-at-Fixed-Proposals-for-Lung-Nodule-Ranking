@@ -1,0 +1,74 @@
+\section{Native visibility interventions}
+\label{sec:visibility}
+
+\subsection{Change the available sources at a fixed proposal}
+
+Let $p$ be a released candidate in physical coordinates and $I(v)$ the intensity at native voxel center $v$. For any visible source set $V$, form the native image
+\begin{equation}
+ I_V(v)=
+ \begin{cases}
+ I(v), & v\in V,\\
+ -1000\HU, & v\notin V .
+ \end{cases}
+ \label{eq:mask}
+\end{equation}
+The ball condition preserves $B(p)=\{v:\lVert v-p\rVert\leq10\mm\}$. The band condition preserves $B(p)$ and the surrounding set $A(p)$ defined below. The full condition retains the original intensities used by the same crop. Each condition resamples into a native-axis-aligned $32^3$ grid centered at the proposal, with $1.2\mm$ sample spacing. We clip to $[-1000,400]\HU$ and quantize to eight bits after interpolation. Models use the same $28^3$ input, covering $32.4\mm$ between its outer sample centers along each axis at inference. Figure~\ref{fig:visibility} illustrates the supports.
+
+Trilinear interpolation mixes adjacent native voxels. Applying a mask to the resampled grid can therefore keep interpolated values whose contributors lie outside the nominal interior boundary. In Eq.~\eqref{eq:mask}, every hidden source contributes the same constant before any such mixing (Fig.~\ref{fig:visibility}B). The two masked inputs agree on every preserved native ball voxel. Their resampled values can differ around its boundary when a query's footprint includes newly visible band sources. The source guarantee concerns the original voxel values, which is the relevant quantity when the native grid is anisotropic. Literal whole-volume masking and randomizing hidden voxels check the implementation (supplement Sec.~S2).
+
+\subsection{Bound the interpolation footprint of sparse queries}
+
+The native voxel diagonal $d$ bounds the distance from a trilinear query to every source with positive weight. We use two query radii
+\begin{equation}
+ \begin{aligned}
+ r_N &=10\mm+\max(1.9\mm,d+0.05\mm),\\
+ r_F &=r_N+1.5\mm .
+ \end{aligned}
+\end{equation}
+For a query $q$ at either radius and a contributing source $v$, the triangle inequality gives
+\begin{equation}
+ r_N-d\;\leq\;\lVert v-p\rVert\;\leq\;r_F+d .
+ \label{eq:support}
+\end{equation}
+The band $A(p)$ contains exactly the native centers meeting these radial bounds. The inner bound is at least $10.05\mm$, so all sparse-query sources lie outside the ball. The between-region gap and the region beyond $r_F+d$ remain fixed air. This spacing-dependent construction ensures the support containment in Eq.~\eqref{eq:support} across different slice spacings and orientations.
+
+We query both signs on 96 axes from a Fibonacci hemisphere at both radii. Every head sees the same 384 clipped and normalized intensities and the same background floor, the median over both radii and signs on every other axis. These readings share physical coordinates across all sparse readouts. The queries are centered on the proposal even when a reader contour or the nodule center is displaced. The dense band is the envelope of their native support. Its resampled representation also depends on the regular image grid and finite crop.
+
+\subsection{Give the same image model sparse native access}
+\label{sec:source_method}
+
+The dense and sparse-head pathways differ both in what they observe and where the observations enter the network. To hold the point of entry fixed, we add a fourth image visibility condition. Let $U(p)$ be the union of native sources with strictly positive trilinear weights for at least one of the 384 queries inside the field of view. The floor uses a subset of those queries. This condition uses $V=B(p)\cup U(p)$ in Eq.~\eqref{eq:mask} and reuses the two-scale image model and training schedule. We verify that the original sparse measurements are preserved and count how many retained native voxels can contribute to the centered image crop.
+
+This arm gives the image network individual native intensities, spatially registered to the ball, before the first convolution. It gives the model access to the ingredients of the 384 readings, including values that sparse interpolation would mix. Comparing it with the band keeps the model, input shape and fusion point fixed. The band adds coverage and changes the spatial pattern of holes inside the envelope. The comparison estimates their combined consequence under image encoding. The count of native sources and the image-grid access audit distinguish what is kept in the native volume from what actually reaches the encoder.
+
+\section{Readouts of identical sparse measurements}
+\label{sec:sparse_method}
+
+\paragraph{Matched relative angular structure.}
+An archived compact head encodes the two radii on each arm, combines the arms within a row and pools across the 96 rows. The pooled representation keeps the pairing of opposing arms and discards the relative directions between rows. We add self-attention to let observations interact across the set. Both the direction-blind and direction-aware variants compute the same symmetric token for each opposing pair. If the shared arm encoder produces $a_j$ and $b_j$, the token projection receives $[a_j+b_j, a_j\odot b_j, |a_j-b_j|]$. The arm encoder sees the near and far intensities relative to the floor, along with the floor itself.
+
+Two attention blocks process the tokens, followed by mean and max pooling. At fixed width, the only difference between models is a fixed bias on the attention logits. For axes with unit vectors $u_j$ and $u_k$, let $z_{jk}=|u_j^\top u_k|$. The directional variant adds $12(z_{jk}-1)$, $35(z_{jk}-1)$, $-6z_{jk}$ or zero in the four heads, respectively. Two kernels favor angular neighbors at different scales, one favors separated axes and one remains global. The blind variant uses zero in all four heads. Both can learn interactions from intensity patterns. The directional variant can also relate high-attenuation measurements on neighboring axes even when their order in memory changes. Absolute direction labels are absent in both variants.
+
+At width 48 and separately at width 96, the two variants share initial weights, training batches, objective, checkpoint grid and parameter count. The width comparison increases the arm, token and fusion widths together within each directional condition. During training we jointly permute the tokens and both axes of the bias matrix. Permutation and antipodal sign-swap checks verify that row order and arbitrary arm sign supply no directional labels. The absolute cosine construction retains geometry among unoriented axes. It intentionally identifies each axis with its antipode.
+
+\paragraph{Frozen image conditioning and compact refit.}
+We use the two already converged ball-only image scorers. Every new sparse readout conditions on the same standalone logit $s$ via the same clipped rescaling and predicts a residual $h$ on that logit. The standalone image score is thus the exact image-only baseline for both capacities and both geometry conditions. During refitting the image and the queries are fixed at their centered, unaugmented locations. This keeps the sparse and image observations aligned. A fresh compact head uses the same frozen image scores, objective and training examples as the attention heads. The comparison with the archived compact fit probes sensitivity to post-convergence refitting under this protocol.
+
+\paragraph{What the compact controls test.}
+The original factorial crossed a chord scalar or pooled endpoint set with conditioning on the image logit or a 96-dimensional pre-logit embedding. The chord scalar takes the mean of the two strongest axes after using the weakest floor-subtracted sample on each axis. Each pathway has its own image-only baseline. A learned sham reassigns opposing arms in training and evaluation while retaining the two readings within an arm. A separately trained unpaired variant removes the pairing by self-pairing each arm. These tests vary what the compact head can retain. The practical comparison adds the paired head to the full-image score with a development-selected grayscale morphology term. That comparison probes incremental value when most of the neighborhood is already visible. The supplement gives the matched score equations and full controls (Secs.~S2--S3).
+
+\section{Evaluation at common false-positive rates}
+\label{sec:evaluation}
+
+\paragraph{Roles and model training.}
+LUNA16 supplies released V2 coordinates, included reference nodules and excluded findings from LIDC-IDRI~\cite{setio2017luna16,armato2011lidc}. We use 356 scans for fitting, 44 for checkpoint selection, 45 for additional development choices and 88 for cutoff calibration. The reused evaluation pool contains \EvalScans{} scans from subsets 6--9. Both scans of one repeated subject are quarantined. All current roles are patient-disjoint. Earlier related work examined the benchmark and helped motivate the hypothesis. Related crop studies included every nodule-bearing scan in the current evaluation pool. The original lock and the post-review analyses are retrospective benchmark reuse.
+
+The image arms share the same 48-epoch optimization, augmentation and hard-negative mining schedule. Scores on the complete checkpoint role select epochs. The negatives chosen by mining can change with the visibility condition. The two-scale 3D network learns from the central high-resolution grid and a downsampled contextual grid. The single-stream 3D model rearranges local $2^3$ blocks into channels before processing the full field with one residual hierarchy. It supplies a distinct way to represent local detail and contextual evidence. We also retain an existing three-view comparison using orthogonal stacks of central slices. All three architectures see the same native masks and crop construction, with different spatial access inside the resampled crop.
+
+\paragraph{Matched ranking and threshold transfer.}
+We score all \EvalMarks{} original proposals and retain all \EvalLesions{} reference lesions in the denominator. At most \ProposedLesions{} lesions have a reference-matching proposal. A strict distance match to the reference radius credits the highest scoring localization per lesion. Excluded findings exempt matching false marks under the release rules. We reproduce the release's score-dependent 100-mark cap and repeat comparisons with all marks eligible. CPM is the mean interpolated sensitivity at $0.125$, $0.25$, $0.5$, $1$, $2$, $4$ and $8$ FP/scan. We denote the matched sensitivity at 1 FP/scan by $S_1$. Each model reaches the same target on its own FROC. A separate transfer analysis fixes thresholds on the calibration role and reports both sensitivity and the realized FP burden on the reuse pool.
+
+We use 2,000 paired patient bootstrap draws. Intervals reflect uncertainty across patients for fixed fitted models. The primary locked CPM interval for restoration adjusts across three contrasts, including representation and conditioning. Other intervals are pointwise 95\% unless identified otherwise. Training seeds and the eight evaluation shuffles of each fitted sham quantify different variation. New comparisons and the anatomy grouping rule were frozen before joining new evaluation scores. The supplement reports the development, cap, subset and threshold checks (Secs.~S3--S4).
+
+\paragraph{Anatomical groups on a global FROC.}
+We link reader polygons to the included reference lesions and rasterize their strict majority on the native grid~\cite{armato2011lidc,fedorov2020lidc}. Before score linkage, each lesion with usable contours and a matching proposal is assigned by whether any matching proposal's centered dense band can sample a majority-labeled voxel. The group definition uses all reference-matching proposals before the score cap. For each fit and patient draw, the entire stream sets a single false-positive axis. Each group's true-positive counts are interpolated on that axis and normalized by the group's lesion count. Thus comparisons at 1 FP/scan use the same global budget even when the model changes which false proposals survive. Unlinked lesions and lesions beyond proposal coverage remain in the global reference denominator.
