@@ -63,10 +63,10 @@ The empirical illustration takes the strict threshold above the $(n+1)$th highes
 \paragraph{Factorial and practical rules.}
 The original fusion-development role selected logit conditioning by average endpoint gain across the two image seeds. The strongest full-context morphology term by average CPM was the gray-shell positive mean, compared with the gray maximum and unpaired alternatives. The shell comparator summarizes grayscale dilation around an image-derived bright component inside the lung~\cite{leemput2015shell}. Its conditional endpoint and sham heads share that frozen base score. The practical rule requires at least one CPM point and one matched $S_1$ point of observed gain, positive lower bounds for both, a positive comparison with correspondence controls, and no interval lower endpoint below $-2$ sensitivity points at the lowest three rates. The primary fit clears the low-rate margin and the second has possible harm at $0.125$ FP/scan. Both CPM upper bounds are below the $+1$ point target. Tables~\ref{tab:locked_factorial}--\ref{tab:locked_practical} separate this bounded result from the estimates of representation and conditioning. The active sparse fits are shown throughout. The optional development choice of a zero residual is recorded separately in the aggregate input.
 
-\section{Post-review matched comparisons}
+\section{Follow-up matched comparisons}
 \label{supp:new}
 
-The exact query-source control exposes additional native information to the original image encoder. Its score is learned from that visibility condition with the same architecture, optimizer and standalone checkpoint rule. The width and directional tests in Tables~\ref{tab:attention_gains}--\ref{tab:attention_absolute} use the very same 384 interpolated readings as the archived late head. These comparisons ask distinct questions. The former changes native coverage at a fixed point of image entry. The latter isolates angular structure and capacity at fixed sparse access and score fusion. Each two-seed sparse result has separate head and image weights by seed. The single-stream and native-source arms each add one fixed training seed.
+The exact query-source control exposes additional native information to the original image encoder. Its score is learned from that visibility condition with the same architecture, optimizer and standalone checkpoint rule. The width and directional tests in Tables~\ref{tab:attention_gains}--\ref{tab:attention_absolute} use the very same 384 interpolated readings as the original compact head. These comparisons ask distinct questions. The former changes native coverage at a fixed point of image entry. The latter isolates angular structure and capacity at fixed sparse access and score fusion. Each two-seed sparse result has separate head and image weights by seed. The single-stream and native-source arms each add one fixed training seed. For the second seed (9143), the direction-blind heads at widths 48 and 96 and the direction-aware head at width 96 selected their first checkpoint (epoch 4), and their evaluated CPM equals that of the frozen ball scorer to numerical precision. Their contrasts in Tables~\ref{tab:attention_contrasts}--\ref{tab:attention_absolute} are therefore contrasts with the ball scorer and carry no information about directional structure or width.
 
 For the single-stream comparison, the full-visibility model was required to meet 80\% CPM on both development roles for a competent reference. Table~\ref{tab:new_dev} records both. The single-stream gain at matched 1 FP/scan is imprecise, while its CPM gain is positive with a pointwise interval above zero. We retain all capped and uncapped results, both subset-group results, all seven matched target rates, and transferred cutoff outcomes for all arms in the aggregate input.
 
@@ -84,7 +84,7 @@ The earlier selected-mark audit is descriptive. At a discrete cutoff a lesion is
 
 Earlier Hessian and visibility comparisons on this benchmark are retained as context in Table~\ref{tab:historical}. The Hessian procedure samples opposing chords through a Hessian-selected interior anchor, with the query spheres still centered at the proposal. Its pairing result concerns that classical ranker and construction. We verified all seven historical rate estimates and intervals against the saved complete streams. The original 3D ball and full image checkpoints and their development scores were also verified against the earlier archived fits.
 
-The anonymous source includes a self-contained figure and table renderer and aggregate inputs. The aggregates include the evaluated rates, effects, uncertainty, fit summaries and denominators needed for regeneration. Private execution manifests bind exact CT and cache bytes, released coordinates, patient-disjoint roles, checkpoint selections and score exports. New source, spatial and architecture comparisons froze their choices before calibration and reuse scoring. The post-review contour groups were frozen before score linkage. Model thresholds, proposal streams and raw reader records are kept separately from the review package.
+The anonymous source includes a self-contained figure and table renderer and aggregate inputs. The aggregates include the evaluated rates, effects, uncertainty, fit summaries and denominators needed for regeneration. Private execution manifests bind exact CT and cache bytes, released coordinates, patient-disjoint roles, checkpoint selections and score exports. New source, spatial and architecture comparisons froze their choices before calibration and reuse scoring. The follow-up contour groups were frozen before score linkage. Model thresholds, proposal streams and raw reader records are kept separately from the review package.
 
 \section*{LLM Usage Statement}
 \input{LLM_Usage_Statement.txt}
@@ -96,6 +96,8 @@ The anonymous source includes a self-contained figure and table renderer and agg
 \onecolumn
 \section{Detailed results tables}
 \subsection*{Absolute visibility and paired operating points}
+\input{tables/visibility}
+\input{tables/anatomy_one}
 \input{tables/absolute}
 \input{tables/paired_rates}
 
@@ -112,7 +114,7 @@ The anonymous source includes a self-contained figure and table renderer and agg
 \input{tables/sham_spread}
 
 \clearpage
-\subsection*{Post-review development and controlled sparse comparisons}
+\subsection*{Follow-up development and controlled sparse comparisons}
 \input{tables/new_dev}
 \input{tables/attention_contrasts}
 \input{tables/attention_gains}

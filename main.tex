@@ -1,6 +1,9 @@
 \documentclass[10pt,twocolumn,letterpaper]{article}
 \usepackage[review]{cvpr}
 \input{shared}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{capt-of}
 \def\paperID{}
 \def\confName{CVPR}
 \def\confYear{2027}
@@ -8,40 +11,59 @@
 \author{Anonymous CVPR submission}
 
 \begin{document}
+\twocolumn[{%
+\renewcommand\twocolumn[1][]{#1}%
 \maketitle
+\vspace{-1.6em}
+\begin{center}
+  \includegraphics[width=\textwidth]{figures/teaser.pdf}
+  \captionof{figure}{\textbf{What does a wider view add at a fixed candidate?} (a)~Inside a $10\mm$ ball (dashed), a vessel branching point and the edge of an off-centre nodule both look like a compact bright object; only the surrounding field tells them apart. (b)~We keep the crop, the network and the training fixed and change only which original CT voxels are visible (hidden voxels become air). Restoring a thin band around the ball raises CPM from \BallCpm\% to \BandCpm\% and closes \PrimaryRecovery\% of the gap to the full field. Illustration on a synthetic phantom, drawn to scale; CPM values are the primary two-scale 3D ranker on 353 LUNA16 scans.}
+  \label{fig:teaser}
+\end{center}
+\vspace{0.6em}
+}]
+
 \begin{abstract}
 \input{abstract}
 \end{abstract}
 
 \section{Introduction}
+\label{sec:intro}
 
-At a candidate location in a chest CT, a nodule and the cross-section of a vessel can both appear as a compact bright object. A larger field can reveal continuation along the vessel. It can also restore part of a nodule whose center is displaced from the candidate or whose boundary extends beyond the local view. A ranking gain from a larger field leaves both explanations open. To learn what the additional field makes available, we need to control access to the original scan while holding the proposals and the ranking task fixed.
+Most lung nodule detectors work in two stages: a candidate generator proposes many locations in a chest CT, and a second network ranks them so that true nodules come before false marks~\cite{setio2017luna16,setio2016multiview,dou2017multilevel}. Rankers that see a wider field around each candidate rank better~\cite{dou2017multilevel,kim2018mgi}. It is less clear \emph{why}. A wider field can show surrounding anatomy, for example a vessel that continues beyond a bright cross-section. It can also show more of the lesion itself, when the candidate sits off the nodule's centre or the nodule is larger than the local view (Fig.~\ref{fig:teaser}a). A better score with a bigger patch leaves both explanations open.
 
-We preserve the native voxels in a $10\mm$ ball around every proposal and restore a nearby band while keeping the input grid, network and training recipe fixed. The band contains the native source voxels of a set of sparsely sampled exterior intensity readings. Masking the original voxels before trilinear resampling gives the ball and band conditions the same interior sources and makes the intended access difference explicit. Each fit learns under the visibility it will receive at evaluation. This tests whether the newly accessible evidence can improve ranking under matched training.
+We separate these explanations with a controlled \emph{visibility intervention}. We keep the candidate locations, the input tensor, the network and the training recipe fixed, and change only which voxels of the original (\emph{native}) scan the ranker can see. The baseline sees a $10\mm$ ball around the candidate. A second condition additionally sees a thin spherical band just outside the ball, and a third sees the full field. Hidden voxels are set to air \emph{before} resampling, so no hidden intensity reaches the input through interpolation (Fig.~\ref{fig:visibility}b). Each model is trained with the visibility it is evaluated with.
 
-On the \EvalScans{} reused LUNA16 scans, the band raises the primary two-scale 3D ranker from \BallCpm\% to \BandCpm\% competition performance metric (CPM). The paired increase is \RestorePrimary{} points with the original multiplicity adjustment. A second fit gains \RestoreRepeat{} points with a pointwise interval. At a matched 1 false positive (FP) per scan, sensitivity improves by \PrimaryOneGain{} and \RepeatOneGain{} points. The band recovers \PrimaryRecovery\% and \RepeatRecovery\% of their observed full-minus-ball CPM gaps. This places a substantial fraction of the fitted models' context advantage within a physically specified set of native sources.
+On the \EvalScans{} LUNA16 evaluation scans, restoring the band raises the competition performance metric (CPM) of a two-scale 3D ranker from \BallCpm\% to \BandCpm\%, a gain of \RestoreGain{} points; a second training run gains \RepeatGain{} points. This is \PrimaryRecovery\% and \RepeatRecovery\% of the ball-to-full gap. We then ask what in the band produces the gain:
+\begin{itemize}
+\setlength\itemsep{0.1em}
+\item \textbf{Access or architecture?} We give the \emph{same} image network only the native voxels behind 384 sparse samples of the band. This recovers less than half of the band's gain, so dense coverage matters even at a fixed point of entry (Sec.~\ref{sec:source_result}).
+\item \textbf{Is direction information missing?} Sparse readouts that attend over the relative directions of the same 384 samples gain about one CPM point at most, far below the dense band (Sec.~\ref{sec:spatial_result}).
+\item \textbf{Which lesions benefit?} Using reader contours, we find that the gains concentrate in the one sixth of lesions whose annotated tissue the band can reach (Sec.~\ref{sec:anatomy_result}).
+\end{itemize}
+A second 3D architecture also benefits from the band (Sec.~\ref{sec:breadth_result}). Together, these tests suggest that much of the value of wider context at fixed candidates comes from seeing more of the lesion, with any benefit from distant anatomy smaller and less certain.
 
-We use three complementary comparisons to explain the gain. First, we give matched sparse readouts the same 384 intensity readings with or without information about neighboring directions, and vary their capacity while holding the image score and fusion point fixed. Second, we expose the exact native sources of the sparse queries to the two-scale image encoder itself, where they enter at the same layer as the full band. This tests whether a gap survives when the sparse source locations participate in the same end-to-end image computation. Third, we use existing reader contours to locate which lesions could be touched by the band at any of their matching proposals. The subgroup analysis separates access to annotated lesion tissue from access beyond that tissue at those proposals.
+\section{Related work}
+\label{sec:related}
 
-These comparisons turn a single dense-versus-pooled result into a set of tests of access, representation and anatomy. We also repeat ball, band and full fitting in a distinct single-stream 3D architecture to test how the effect transfers under the same proposal stream. The resulting evidence concerns fixed-proposal ranking on a previously examined benchmark, where the candidate generator and the reference denominator are shared across all visibility conditions.
+\paragraph{False-positive reduction and context.}
+The LUNA16 challenge fixed a common candidate set and evaluation, which made rankers directly comparable~\cite{setio2017luna16}. Multi-view 2D networks combine differently oriented planes~\cite{setio2016multiview}; 3D networks with several receptive fields~\cite{dou2017multilevel}, nested fields of view~\cite{kim2018mgi} and end-to-end detectors~\cite{ding2017accurate,zhu2018deeplung,baumgartner2021nndetection,ardila2019endtoend} report that larger 3D context helps. These works change the patch size, the number of streams or the architecture together. We hold all of these fixed and change only the native CT available inside the same crop, which isolates the contribution of the extra evidence from that of the network design.
+
+\paragraph{Hand-crafted shape and exterior cues.}
+Hessian filters separate dot-like nodules from line-like vessels~\cite{li2003selective}. Spherical-shell features~\cite{leemput2015shell} and spectra of intensity profiles on spheres~\cite{ciompi2015frequencies} measure the surroundings of a candidate to tell vessels from nodules. These studies motivate the exterior band. We use their sampling geometry not as a feature but to define what is made visible, and we compare sparse samples with the dense region that contains them.
+
+\paragraph{Occlusion and input interventions.}
+Removing or masking parts of the input is a standard way to ask which evidence a network uses~\cite{zeiler2014visualizing,fong2017meaningful}. Masking a trained network's input creates inputs it never saw; retraining under the mask avoids this distribution shift~\cite{hooker2019benchmark}. We follow the retraining approach: every visibility condition is trained and evaluated under its own mask. Such tests matter in medical imaging, where networks can exploit unintended cues~\cite{geirhos2020shortcut,zech2018variable}, and where the effective receptive field may be much smaller than the nominal one~\cite{luo2016erf}.
+
+\paragraph{Set and attention readouts.}
+Permutation-invariant pooling summarizes a set of measurements without an arbitrary order~\cite{zaheer2017deep}, and set attention adds learned interactions between elements~\cite{lee2019set,wang2018nonlocal}. We use one set-attention head with and without a fixed bias that encodes the angle between sample directions. This tests whether the sparse samples fall short only because a pooled readout discards their relative geometry.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/visibility.pdf}
-  \caption{Five ways to expose evidence at the same physical proposal (cross). Blue preserves the native ball. The sparse head receives two samples on each arm of each of 96 axes in 3D, shown here by a subset of in-plane queries. The native-source condition gives the image encoder the voxel values supporting those interpolated queries. The dense band retains the entire bounded radial support, and the full condition uses the original field. Hidden native intensities become fixed air before sampling the same centered crop. A uses an illustrative native spacing. B shows how interpolating first would carry signal from an exterior voxel into an interior query. Masking first replaces that signal with a fixed contribution from air.}
+  \caption{\textbf{Visibility conditions at one proposal} (cross), drawn to scale on a synthetic phantom with an illustrative native spacing of $0.70\times0.70\times1.25\mm$. (a)~Blue: the native ball $B(p)$. Purple: the sparse readings sample two radii on both arms of each of 96 axes (12 in-plane axes shown); they are read by separate heads, not by the image network. Teal: the native voxels $U(p)$ that support those readings, shown to the image network. Orange: the full band $A(p)$, the envelope of that support (here $10.3$--$15.0\mm$). Grey: the original field. Hidden voxels are air ($-1000\HU$). (b)~Masking native voxels before trilinear resampling guarantees that a hidden voxel can only contribute the value of air.}
   \label{fig:visibility}
 \end{figure*}
-
-\section{Related work}
-
-\paragraph{Shape and exterior measurements.}
-Hessian enhancement separates dot-like nodules from lines and sheets at candidate sites~\cite{li2003selective}. Van de Leemput \etal apply a spherical-shell feature after candidate generation to separate vascular and nodular structures~\cite{leemput2015shell}. Ciompi \etal sample circular intensity profiles on multiscale spherical surfaces and describe nodules by pooling their frequency spectra~\cite{ciompi2015frequencies}. These studies establish the relevance of exterior measurements and structured shape cues. We use the query locations to define an access intervention, compare a subset of native sources with its encompassing band, and measure how much ranking improves before selecting an exterior descriptor.
-
-\paragraph{Learned context at fixed candidates.}
-Setio \etal combine evidence from differently oriented planes with multistream CNNs for false-positive reduction~\cite{setio2016multiview}. Kim \etal use nested fields of view and learn gradual integration of features across scales~\cite{kim2018mgi}. The LUNA16 false-positive reduction track makes comparisons at common candidates possible~\cite{setio2017luna16}. Under that setup, our dense visibility comparisons vary the original CT sources available to a model, including the sources that contribute to the inner resampled grid. We keep the field of view and its tensor shape constant. This makes the band intervention distinct from choosing a wider patch or introducing another stream.
-
-\paragraph{Geometry and set readouts.}
-Permutation-invariant pooling summarizes a set of measurements without arbitrary row order~\cite{zaheer2017deep}. Set attention extends such readouts with learned interactions across elements~\cite{lee2019set}. We use the same set computation with and without a relative angular bias. This leaves the opposing pair identity within each row intact and isolates whether cross-row directional structure helps under a common sparse fusion scheme.
 
 \input{methods}
 \input{results}
@@ -50,7 +72,6 @@ Permutation-invariant pooling summarizes a set of measurements without arbitrary
 \section*{LLM Usage Statement}
 \input{LLM_Usage_Statement.txt}
 
-\clearpage
 {\small
 \bibliographystyle{ieeenat_fullname}
 \bibliography{references}

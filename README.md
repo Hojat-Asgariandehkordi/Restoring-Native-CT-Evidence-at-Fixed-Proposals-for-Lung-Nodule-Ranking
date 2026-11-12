@@ -8,9 +8,13 @@ From the extracted archive root, run the following with a TeX Live installation 
 latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -outdir=build main.tex supplement.tex
 ```
 
-The anonymous PDFs are `build/main.pdf` and `build/supplement.pdf`. The main has nine pages of working text and figures before its references. The LLM Usage Statement is included in both documents.
+The anonymous PDFs are `build/main.pdf` and `build/supplement.pdf`. The main paper has eight pages of text and figures before the LLM Usage Statement and references. The LLM Usage Statement is included in both documents.
 
 ## Regenerate tables and figures
+
+One command rebuilds all tables, all figures and both PDFs: `./scripts/make_all.sh`. The revised Times-font figures are drawn by `scripts/` (see `REVISION_NOTES.md`); the original renderer below still produces the tables.
+
+### Original renderer
 
 The archive contains the vector figure PDFs and generated LaTeX tables. To regenerate them, use Python 3.9–3.11 and run the following from the extracted archive root.
 

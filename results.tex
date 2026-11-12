@@ -1,82 +1,74 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{A native band recovers most of the two-scale context gap}
-\label{sec:dense_result}
-
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/restoration.pdf}
-  \caption{Restoring the band improves two separately fitted two-scale 3D rankers on the same \EvalScans{} scans. A shows paired effects on CPM and sensitivity at matched 1 FP/scan. The primary CPM bar is adjusted across three locked comparisons. Other bars give pointwise 95\% patient intervals. B shows matched FROC for ball, ball plus band and full access, using both seeds. The band recovers \PrimaryRecovery\% and \RepeatRecovery\% of the observed full-minus-ball CPM gaps.}
+  \caption{\textbf{Restoring the band improves ranking at fixed proposals.} (a)~Paired band-minus-ball effects on CPM and on $S_1$ for every architecture, with 95\% patient-bootstrap intervals (the fit-1 CPM interval is adjusted for three comparisons). Orange: interval above zero. (b)~Matched FROC curves of the two two-scale fits. (c)~Band-minus-ball sensitivity at each of the seven operating points that make up CPM; fit~1 filled, fit~2 open. The band improves both two-scale fits at every operating point.}
   \label{fig:restoration}
 \end{figure*}
-\input{tables/visibility}
 
-The primary two-scale ranker achieves \BallCpm\% CPM with the native ball, \BandCpm\% with the ball and band, and \FullCpm\% with the full field (Fig.~\ref{fig:restoration} and Tab.~\ref{tab:visibility}). Restoring the band raises CPM by \RestorePrimary{} points under the three-contrast adjustment. The pointwise interval is \RestorePrimaryPointwise{} points. The second seed yields \RestoreRepeat{} points, using a pointwise interval. Matched $S_1$ gains are \RestoreOne{} and \RepeatOne{} points. All effects are calculated before rounding the absolute scores.
+\subsection{The band recovers most of the context gap}
+\label{sec:dense_result}
 
-The absolute ranking curves separate across operating points, with higher sensitivity under restored access at all seven release rates in both fits. The gain represents \PrimaryRecovery\% and \RepeatRecovery\% of the observed gap from ball to full CPM. It leaves a residual advantage for the full crop. The recovery fraction refers to fitted ranking performance at the same proposals. It depends on the architecture, the training procedure and the operating points used in CPM. The band gains remain positive in each reused subset group and essentially unchanged when all marks are eligible. Supplement Sec.~S3 reports all seven operating points and the uncapped comparisons.
+With only the native ball, the two-scale ranker reaches \BallCpm\% CPM. Adding the band raises this to \BandCpm\%, and the full field gives \FullCpm\% (Tab.~\ref{tab:visibility}). The band's gain is \RestorePrimary{} points (adjusted interval) in fit~1 and \RestoreRepeat{} points in fit~2, which is \PrimaryRecovery\% and \RepeatRecovery\% of the ball-to-full gap (Fig.~\ref{fig:restoration}a). At 1~FP/scan, sensitivity rises by \RestoreOne{} and \RepeatOne{} points. The gain is present at all seven operating points in both fits (Fig.~\ref{fig:restoration}b,c). A residual advantage of about 1.8 points remains for the full field.
 
-The independent-cutoff analysis separates a change in ranking from threshold calibration. Transferring each model's threshold selected on the 88 calibration scans changes sensitivity by \TransferredPrimary{} points for the primary fit and \TransferredRepeat{} points for the second. The achieved FP burdens differ by model. The two matched results therefore give stronger evidence for ranking improvement at 1 FP/scan than the fixed-threshold results give for deployment at a particular burden.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/robustness.pdf}
+  \caption{\textbf{Robustness of the main effects.} (a)~CPM effects on the whole pool, on its two halves (LUNA16 subsets split before evaluation into a confirmation and a replication half) and with all marks eligible. (b)~Band-minus-ball change when each model's threshold is fixed on the 88 calibration scans: sensitivity (left) and realized FP burden (right). 95\% patient-bootstrap intervals.}
+  \label{fig:robustness}
+\end{figure}
 
-\subsection{Native source coverage matters at the same image entry point}
+The effects do not depend on one part of the pool or on the mark cap (Fig.~\ref{fig:robustness}a). The band-minus-ball gain is positive with an interval above zero in both halves of the pool for both fits ($+3.1$ to $+6.2$ points), and removing the 100-mark cap leaves it unchanged (\PrimaryUncapped{} and \RepeatUncapped{}). The band-minus-sources and single-stream effects keep their sign in both halves, with wider intervals.
+
+Matched comparisons evaluate each model at the same FP rate on its own FROC. With thresholds instead fixed in advance on the 88 calibration scans, sensitivity rises by \TransferredPrimary{} and \TransferredRepeat{} points, while the realized FP burden changes by less than $0.25$ per scan (Fig.~\ref{fig:robustness}b). Because the burden differs slightly between models, the matched results remain the stronger evidence of better ranking.
+
+\input{tables/visibility_main}
+
+\subsection{Dense coverage matters at the same entry point}
 \label{sec:source_result}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/coverage.pdf}
-  \caption{Native query sources and the dense band enter the same image encoder. A counts distinct retained exterior native voxels per proposal that can contribute to the centered crop, averaged over the full evaluation stream. B gives paired CPM effects for the same two-scale 3D architecture and seed. All bars in B are pointwise 95\% patient intervals. The dense band outperforms exact query-source access even when both enter at the first image layer.}
+  \includegraphics[width=\columnwidth]{figures/coverage.pdf}
+  \caption{\textbf{Native sources versus the dense band in the same image network} (two-scale 3D, fit~1). (a)~Mean number of exterior native voxels per proposal that reach the crop. (b)~Paired effects on CPM (filled) and $S_1$ (open), with 95\% intervals.}
   \label{fig:coverage}
-\end{figure*}
+\end{figure}
 
-A late residual could underperform simply because it receives sparse information after the image features have been computed. The native-source arm removes that difference in processing between the two image inputs. It retains the ball and the union of positive-weight sources of the same 384 query locations. Both this arm and the dense-band arm can learn spatial filters over all visible intensities from their first convolution. The mean exterior coverage reaching the centered crop is \QuerySources{} native sources per proposal in the query-source arm and \BandSources{} in the dense-band arm (Fig.~\ref{fig:coverage}).
+A sparse head could fall short simply because its evidence arrives late, after the image features are computed. The native-source condition removes this difference: it shows the image network every native voxel behind the 384 samples, from the first convolution on. This raises CPM over the ball by only \SourcesGain{} points. The band adds a further \CoverageGap{} points over the native sources (Fig.~\ref{fig:coverage}b). At 1~FP/scan the corresponding effects are \SourcesOne{} and \CoverageOne{} points, so the CPM evidence is clearer than that at a single operating point. The band gives the network about six times as many exterior voxels (Fig.~\ref{fig:coverage}a) and, unlike the scattered sources, a contiguous shell in which filters can follow structures. Our intervention changes both at once, so it cannot say how much each contributes.
 
-Giving the encoder the query sources changes CPM over the ball by \SourcesGain{} points in the primary seed. The band adds a further \CoverageGap{} points over those sources. The point estimate for the latter comparison is positive in both subset groups, and removing the cap gives the same pooled CPM effect. At matched 1 FP/scan, query-source versus ball is \SourcesOne{} points and band versus query-source is \CoverageOne{} points. The CPM evidence is clearer than the result at that individual operating point.
-
-The residual gap remains when the point of entry and image capacity are matched. It supports a role for the additional coverage and spatial continuity supplied by the dense band under this masking scheme. The holes between the retained query sources can disrupt patterns that a filter would otherwise see across the band. Their effect and that of the additional native measurements are coupled in this intervention. The query-source arm also retains the underlying HU values before sparse interpolation. Its comparison with the late endpoint heads combines changes in representation, fusion and the values available to the ranker.
-
-\subsection{Relative geometry alone leaves a large sparse gap}
+\subsection{Sample geometry does not close the sparse gap}
 \label{sec:spatial_result}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/spatial.pdf}
-  \caption{Paired CPM effects of the same 384 readings on the two frozen ball scorers. A compares the archived compact head, its frozen-image refit and both widths of set attention against the same ball-only baseline. Dense restoration is shown on the same scale. B isolates the directional bias at fixed width and the width change at fixed bias. Pointwise 95\% intervals use shared patient draws. The two markers denote separate training seeds.}
-  \label{fig:spatial}
-\end{figure*}
+  \includegraphics[width=\columnwidth]{figures/sparse.pdf}
+  \caption{\textbf{Sparse readouts of the same 384 samples.} (a)~CPM gain of each head over its own frozen ball-only ranker, compared with the dense band. Crosses mark heads of fit~2 whose selected checkpoint reproduces the ball ranker exactly (no learned correction). (b)~Controls on the compact head (supplement Sec.~S3); the dotted line marks the $+1$ point target set in advance for the full-field addition. All intervals are 95\% patient-bootstrap intervals.}
+  \label{fig:sparse}
+\end{figure}
 
-Sparsity alone does not require pooling away angular structure. We test its value by adding relative directions to an otherwise identical attention head. The model can use line neighborhoods without relying on absolute orientation or learning a positional code from the ordering of the array. At width 48 the directional-minus-blind CPM effects are \GeometrySmallPrimary{} and \GeometrySmallRepeat{} points across the two seeds. At width 96 they are \GeometryLargePrimary{} and \GeometryLargeRepeat{} points. The matched $S_1$ differences also provide little evidence of a gain (supplement Sec.~S4). Doubling the width yields no consistent improvement in either geometry condition (Fig.~\ref{fig:spatial}B).
+If the sparse samples fall short only because a pooled readout discards their relative directions, attention with a direction bias should help. It does not, to a useful degree. In fit~1, every sparse head improves on its ball ranker by 0.8--1.5 CPM points, but the direction-aware minus direction-blind difference is \GeometrySmallPrimary{} points at width 48 and \GeometryLargePrimary{} at width 96 (Fig.~\ref{fig:sparse}a). Doubling the width does not help either. The dense band still leads the best sparse head (the compact refit) by \CompactGapPrimary{} points, and the direction-aware width-48 head by \ResidualSmallPrimary{} CPM points and \ResidualSmallOnePrimary{} points of $S_1$.
 
-The compact refit changes CPM relative to the archived compact fit by \RefitPrimary{} and \RefitRepeat{} points. All refits share frozen image logits and the same sampling procedure. The primary compact refit gives the largest observed sparse gain over its ball scorer among the tested readouts for that seed. The dense band still leads the compact refits by \CompactGapPrimary{} and \CompactGapRepeat{} CPM points. The directional width-48 head trails the dense band by \ResidualSmallPrimary{} and \ResidualSmallRepeat{} CPM points and by \ResidualSmallOnePrimary{} and \ResidualSmallOneRepeat{} matched sensitivity points at 1 FP/scan. The width-96 comparison gives CPM gaps of \ResidualLargePrimary{} and \ResidualLargeRepeat{} points. These differences refer to the fitted readouts and use their unchanged ball-only references.
+In fit~2, three of the four attention heads (direction-blind at both widths and direction-aware at width 96) selected their first checkpoint, and their scores reproduce the ball ranker exactly. Comparisons involving these heads are therefore comparisons with the ball ranker, and we do not read them as evidence about geometry. The other fit-2 heads change CPM by $-0.2$ to $+0.1$ points relative to the ball ranker, and the band leads all of them by more than four points.
 
-Taken together with the same-encoder source comparison, the attention experiments narrow the explanation. Giving a late readout the relative directions of the sampled axes, increasing its width and fitting after the image encoder converges leave a substantial CPM difference from dense access. The same backbone also benefits from denser access when all exterior evidence arrives before the first convolution. A more informative sampling pattern or a different geometry-preserving fusion could still use the existing budget of readings differently.
+The compact controls in Fig.~\ref{fig:sparse}b show the same picture. Summarizing axes by endpoints instead of one scalar (\RepresentPrimary{} and \RepresentRepeat{}), fusing an embedding instead of the score (\FusionPrimary{}), and keeping rather than shuffling the pairing of opposite arms (\PairShamPrimary{} and \PairShamRepeat{}) all give estimates within one point of zero. Adding the paired head to the full-field ranker changes CPM by \PracticalPrimary{} and \PracticalRepeat{} points; both upper limits fall below the $+1$ point target set in advance.
 
-\subsection{The largest gains occur where the band reaches a lesion}
+\subsection{The largest gains occur where the band reaches the lesion}
 \label{sec:anatomy_result}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/anatomy.pdf}
-  \caption{Anatomy groups defined from all original matching proposals before scores were joined. Sensitivity differences compare band and ball at global FP/scan targets on the complete streams. A lesion is in the overlap group if the band of any matching proposal reaches its majority-reader contour. The 377 never-overlap and 72 overlap lesions are shown, with paired pointwise 95\% patient intervals. The full FROC still includes the six unlinked lesions and the six linked lesions without proposals.}
+  \includegraphics[width=\columnwidth]{figures/anatomy.pdf}
+  \caption{\textbf{Gains by anatomy group.} Band-minus-ball sensitivity on the global FP axis for lesions whose majority-reader contour the band reaches at some matching proposal (orange, $n=72$) and lesions it never reaches (blue, $n=377$). Groups were fixed before scores were joined. 95\% patient-bootstrap intervals.}
   \label{fig:anatomy}
-\end{figure*}
-\input{tables/anatomy_one}
+\end{figure}
 
-Of \EvalLesions{} reference lesions, 455 link to usable reader contours and 449 of those also have at least one matching proposal. The centered inference crop's visible band reaches majority-labeled lesion tissue at one or more matching proposals for \AnyOverlap{} of those 449. The other \NeverOverlap{} have no band overlap at any matching proposal. Across the entire pool there are 604 reference--proposal pairs, of which 598 have usable contours and 216 overlap. All six unlinked lesions have a matching proposal. The other six are linked lesions outside the proposal ceiling and remain in the denominator.
+Of the \EvalLesions{} reference lesions, 455 link to usable reader contours and 449 of these have a matching proposal. For \AnyOverlap{} of them, the band of at least one matching proposal contains majority-labelled lesion tissue; for the other \NeverOverlap{} it never does. At 1~FP/scan, the band raises sensitivity by \AnyPrimary{} and \AnyRepeat{} points in the reached group, but only by \NeverPrimary{} and \NeverRepeat{} points in the never-reached group (Fig.~\ref{fig:anatomy}; full table in the supplement). The difference between the groups is \HeteroPrimary{} and \HeteroRepeat{} points. So about one sixth of the lesions account for more than half of the net gain at this operating point. In the never-reached group, the gains at 8~FP/scan have intervals above zero in both fits, while those at 1~FP/scan are compatible with small gains or small losses.
 
-At 1 FP/scan, the band improves sensitivity in the overlap group by \AnyPrimary{} and \AnyRepeat{} points. The corresponding effects in the never-overlap group are \NeverPrimary{} and \NeverRepeat{} points. The overlap-minus-never difference in gains is \HeteroPrimary{} points in the primary fit and \HeteroRepeat{} in the second. Thus about one sixth of the reference lesions account for over half of the net increase at this target in each fit. The 8-FP pointwise estimates in the never-overlap group are positive with intervals above zero for both fits, while the estimates at 1 FP/scan are compatible with both small gains and small losses. Figure~\ref{fig:anatomy} shows the full range of operating points.
+The groups differ in more than band access. The median reference diameter is $17.4\mm$ in the reached group and $5.8\mm$ in the never-reached group, and reached lesions have more matching proposals. The grouping is observational and contour coverage is imperfect, and every group's sensitivity also depends on how the model ranks false marks. The results support a narrow claim: the largest gains occur where the restored voxels include annotated lesion tissue. How much patterns outside the lesion contribute remains open. A per-lesion audit at the fixed fit-1 threshold points the same way: the band gains 28 lesions and loses 9, and for 12 of the 28 gained lesions the band of the highest-scoring mark reaches the contour (supplement Tab.~S19).
 
-The median reference diameter is $17.36\mm$ in the overlap group and $5.75\mm$ in the never-overlap group. The overlap group also has more matching proposals per lesion. These properties can influence which lesions survive ranking under different visibility. The anatomy groups are observational, with imperfect contour coverage, and every sensitivity estimate also depends on the model's ranking of false marks. This supports the narrower explanation that the largest gains occur where restored voxels include part of the annotated lesion. It leaves the contribution of extra-lesional patterns to the gains unresolved. In the earlier descriptive decision audit at the primary discrete cutoff, the fitted band adds 28 lesions and loses nine. Of the 28 gained lesions, 12 have a highest-scoring retained mark whose band reaches the contour. The all-proposal grouping above is independent of that choice of mark.
-
-\subsection{Transfer across image architectures}
+\subsection{Transfer to other architectures}
 \label{sec:breadth_result}
 
-The distinct single-stream 3D architecture meets the prespecified 80\% full-visibility development criterion, with \SingleCheck\% and \SingleDev\% CPM on the checkpoint and readout development roles. On the evaluation pool, its band gains \SingleGain{} CPM points and \SingleOne{} points at matched 1 FP/scan (Tab.~\ref{tab:visibility}). Its CPM gain remains positive in both reused subset groups. A 3D model that processes the full field in a single hierarchy therefore also benefits from the intervention on the same proposal stream.
-
-The earlier three-view fit gains \TriGain{} CPM points and \TriOne{} points at matched 1 FP/scan. This comparison is inconclusive. Each view uses a limited stack of central slices, so the same native mask is represented differently within the network. The architecture comparisons cover differences in how the resampled crop is processed while keeping patients and candidate locations fixed. The external eligibility recheck identified no untouched full-scan cohort with a usable reference and defensible evaluation route in the available inventories (supplement Sec.~S1).
-
-\subsection{Compact controls and the full-context increment}
-\label{sec:compact_result}
-
-The original sparse factorial gives an adjusted endpoint-versus-scalar effect of \RepresentPrimary{} CPM points at fixed logit fusion. The second seed gives \RepresentRepeat{} points. The adjusted effect of embedding versus logit on the endpoint gain is \FusionPrimary{} points in the primary fit. These intervals and the change of sign across seeds leave the representation and conditioning advantages uncertain under this compact head. Paired-minus-sham CPM changes are \PairShamPrimary{} and \PairShamRepeat{} points, and the unpaired comparison is similarly uncertain. This leaves little evidence for a consistent advantage from the nominated opposing correspondence. Supplement Sec.~S3 gives the complete factorial and separately fitted controls.
-
-Adding the paired head to full context with the selected gray-mean morphology term changes CPM by \PracticalPrimary{} and \PracticalRepeat{} points. Both upper interval endpoints fall below the prespecified $+1$ CPM-point target for the tested addition. That is a more precise statement than the representation and conditioning comparisons allow. Matched $S_1$ changes are \PracticalOne{} and \PracticalRepeatOne{} points. The low-FP noninferiority check clears its prespecified margin for the first fit, with a possible loss beyond the margin at the lowest rate for the second. Supplement Sec.~S3 reports the threshold transfer, sham and morphology comparisons.
+The single-stream 3D network met the 80\% full-field CPM requirement fixed in advance on both development roles (\SingleCheck\% and \SingleDev\%). On the evaluation pool, the band raises its CPM by \SingleGain{} points, recovering 59\% of its ball-to-full gap (Tab.~\ref{tab:visibility}); its $S_1$ gain, \SingleOne{}, is imprecise. The three-view 2D model gains \TriGain{} CPM points, which is inconclusive. Its views contain only a few central slices, so the same 3D mask reaches the network very differently. A ranker that processes the full 3D field therefore also benefits from the band, while for slice-based input the evidence is weak.

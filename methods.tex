@@ -1,9 +1,15 @@
-\section{Native visibility interventions}
+\section{Controlling what the ranker can see}
 \label{sec:visibility}
 
-\subsection{Change the available sources at a fixed proposal}
+\subsection{Setting and notation}
+\label{sec:setting}
 
-Let $p$ be a released candidate in physical coordinates and $I(v)$ the intensity at native voxel center $v$. For any visible source set $V$, form the native image
+A scan is a set of native voxel centres $v\in\mathbb{R}^3$ (in millimetres, physical coordinates) with intensities $I(v)$ in Hounsfield units (HU). The candidate generator supplies proposals $p\in\mathbb{R}^3$; we use the released LUNA16 proposals unchanged~\cite{setio2017luna16}. For each proposal, a ranker receives a crop and returns a score. The crop is a $32^3$ grid centred at $p$ and aligned with the native axes, with $1.2\mm$ spacing, obtained by trilinear interpolation of the native voxels. Values are clipped to $[-1000,400]\HU$ and stored as 8-bit integers; the networks use the central $28^3$ samples, which span $32.4\mm$. All conditions below share this crop, so the input shape never changes.
+
+\subsection{Mask native voxels, then resample}
+\label{sec:mask}
+
+A \emph{visibility condition} is a set $V$ of native voxels the ranker may see. All other voxels are replaced by air:
 \begin{equation}
  I_V(v)=
  \begin{cases}
@@ -12,63 +18,86 @@ Let $p$ be a released candidate in physical coordinates and $I(v)$ the intensity
  \end{cases}
  \label{eq:mask}
 \end{equation}
-The ball condition preserves $B(p)=\{v:\lVert v-p\rVert\leq10\mm\}$. The band condition preserves $B(p)$ and the surrounding set $A(p)$ defined below. The full condition retains the original intensities used by the same crop. Each condition resamples into a native-axis-aligned $32^3$ grid centered at the proposal, with $1.2\mm$ sample spacing. We clip to $[-1000,400]\HU$ and quantize to eight bits after interpolation. Models use the same $28^3$ input, covering $32.4\mm$ between its outer sample centers along each axis at inference. Figure~\ref{fig:visibility} illustrates the supports.
+The crop is then resampled from $I_V$. The order matters. Trilinear interpolation mixes up to eight neighbouring native voxels, so masking the \emph{resampled} grid would let a hidden voxel near the boundary leak into a visible sample. With Eq.~\eqref{eq:mask}, a hidden voxel contributes only the constant value of air (Fig.~\ref{fig:visibility}b). We verified this implementation by masking the whole volume literally and by randomizing hidden voxels (supplement Sec.~S2).
 
-Trilinear interpolation mixes adjacent native voxels. Applying a mask to the resampled grid can therefore keep interpolated values whose contributors lie outside the nominal interior boundary. In Eq.~\eqref{eq:mask}, every hidden source contributes the same constant before any such mixing (Fig.~\ref{fig:visibility}B). The two masked inputs agree on every preserved native ball voxel. Their resampled values can differ around its boundary when a query's footprint includes newly visible band sources. The source guarantee concerns the original voxel values, which is the relevant quantity when the native grid is anisotropic. Literal whole-volume masking and randomizing hidden voxels check the implementation (supplement Sec.~S2).
+The three main conditions use the ball
+\begin{equation}
+B(p)=\{v:\lVert v-p\rVert\le 10\mm\},
+\end{equation}
+the ball plus a band $A(p)$ defined next, and the full field.
 
-\subsection{Bound the interpolation footprint of sparse queries}
+\subsection{The band: where sparse samples get their values}
+\label{sec:band}
 
-The native voxel diagonal $d$ bounds the distance from a trilinear query to every source with positive weight. We use two query radii
+Let $d$ be the diagonal of one native voxel, which depends on the scan's spacing. Any native voxel with a positive trilinear weight for a sample point $q$ lies within $d$ of $q$. We place sparse samples at two radii from the proposal,
 \begin{equation}
  \begin{aligned}
- r_N &=10\mm+\max(1.9\mm,d+0.05\mm),\\
+ r_N &=10\mm+\max(1.9\mm,\,d+0.05\mm),\\
  r_F &=r_N+1.5\mm .
  \end{aligned}
+ \label{eq:radii}
 \end{equation}
-For a query $q$ at either radius and a contributing source $v$, the triangle inequality gives
+By the triangle inequality, every native voxel $v$ that contributes to a sample at either radius satisfies
 \begin{equation}
  r_N-d\;\leq\;\lVert v-p\rVert\;\leq\;r_F+d .
  \label{eq:support}
 \end{equation}
-The band $A(p)$ contains exactly the native centers meeting these radial bounds. The inner bound is at least $10.05\mm$, so all sparse-query sources lie outside the ball. The between-region gap and the region beyond $r_F+d$ remain fixed air. This spacing-dependent construction ensures the support containment in Eq.~\eqref{eq:support} across different slice spacings and orientations.
+The band is exactly this shell of native voxels,
+\begin{equation}
+A(p)=\{v:\ r_N-d\le\lVert v-p\rVert\le r_F+d\}.
+\label{eq:band}
+\end{equation}
+Because $r_N-d\ge10.05\mm$, the band never overlaps the ball, and a thin gap of air separates them. For example, with $0.70\times0.70\times1.25\mm$ voxels, $d=1.59\mm$, $r_N=11.9\mm$, $r_F=13.4\mm$, and the band covers $10.3$--$15.0\mm$. The construction adapts to each scan's spacing, so Eq.~\eqref{eq:support} holds for every slice thickness. Algorithm~\ref{alg:band} summarizes the procedure.
 
-We query both signs on 96 axes from a Fibonacci hemisphere at both radii. Every head sees the same 384 clipped and normalized intensities and the same background floor, the median over both radii and signs on every other axis. These readings share physical coordinates across all sparse readouts. The queries are centered on the proposal even when a reader contour or the nodule center is displaced. The dense band is the envelope of their native support. Its resampled representation also depends on the regular image grid and finite crop.
+\begin{algorithm}[t]
+\caption{Building one visibility-controlled input}
+\label{alg:band}
+\small
+\begin{algorithmic}[1]
+\Require scan $\{(v,I(v))\}$, voxel spacing $s$, proposal $p$, condition $c\in\{\text{ball},\text{band},\text{sources},\text{full}\}$
+\State $d\gets\lVert s\rVert_2$ \Comment{native voxel diagonal}
+\State $r_N\gets 10+\max(1.9,\,d+0.05)$;\ \ $r_F\gets r_N+1.5$ \Comment{Eq.~\eqref{eq:radii}}
+\State $B\gets\{v:\lVert v-p\rVert\le10\}$
+\State $A\gets\{v:r_N-d\le\lVert v-p\rVert\le r_F+d\}$ \Comment{Eq.~\eqref{eq:band}}
+\State $U\gets\{v:\ v$ has positive trilinear weight for one of the 384 samples $q_{j,\pm,r}\}$
+\State $V\gets B$, $B\cup A$, $B\cup U$ or all voxels, according to $c$
+\State $I_V(v)\gets I(v)$ if $v\in V$, else $-1000$ \Comment{Eq.~\eqref{eq:mask}}
+\State $X\gets$ trilinear resample of $I_V$ on the $32^3$ grid at $1.2\mm$ around $p$
+\State \Return $\mathrm{uint8}(\mathrm{clip}(X,-1000,400))$
+\end{algorithmic}
+\end{algorithm}
 
-\subsection{Give the same image model sparse native access}
+\subsection{Sparse samples and their native sources}
 \label{sec:source_method}
 
-The dense and sparse-head pathways differ both in what they observe and where the observations enter the network. To hold the point of entry fixed, we add a fourth image visibility condition. Let $U(p)$ be the union of native sources with strictly positive trilinear weights for at least one of the 384 queries inside the field of view. The floor uses a subset of those queries. This condition uses $V=B(p)\cup U(p)$ in Eq.~\eqref{eq:mask} and reuses the two-scale image model and training schedule. We verify that the original sparse measurements are preserved and count how many retained native voxels can contribute to the centered image crop.
+We choose 96 unit axes $u_1,\dots,u_{96}$ spread evenly over a hemisphere (a Fibonacci lattice). On each axis we sample both directions ($\pm$) at both radii, giving $96\times2\times2=384$ samples $q_{j,\pm,r}=p\pm r\,u_j$ with $r\in\{r_N,r_F\}$. All sparse readouts in Sec.~\ref{sec:sparse_method} receive the same 384 clipped and normalized values, plus a background \emph{floor}: for each axis, the median of the samples on all other axes. The band $A(p)$ is the envelope of the support of these samples.
 
-This arm gives the image network individual native intensities, spatially registered to the ball, before the first convolution. It gives the model access to the ingredients of the 384 readings, including values that sparse interpolation would mix. Comparing it with the band keeps the model, input shape and fusion point fixed. The band adds coverage and changes the spatial pattern of holes inside the envelope. The comparison estimates their combined consequence under image encoding. The count of native sources and the image-grid access audit distinguish what is kept in the native volume from what actually reaches the encoder.
+The band differs from the sparse samples in two ways at once: it shows far more voxels, and it enters the image network before the first convolution, whereas the sparse samples enter a separate head. To separate these, we add a fourth image condition. Let $U(p)$ be the set of native voxels with a strictly positive trilinear weight for at least one of the 384 samples. The \emph{native-source} condition uses $V=B(p)\cup U(p)$ in Eq.~\eqref{eq:mask}, with the same two-scale network and training schedule. It gives the image network every native value that the sparse samples are built from, at the same point of entry as the band. On average, $U(p)$ contributes \QuerySources{} exterior voxels to the crop, against \BandSources{} for the band (Fig.~\ref{fig:coverage}a).
 
-\section{Readouts of identical sparse measurements}
+\subsection{Readouts of the sparse samples}
 \label{sec:sparse_method}
 
-\paragraph{Matched relative angular structure.}
-An archived compact head encodes the two radii on each arm, combines the arms within a row and pools across the 96 rows. The pooled representation keeps the pairing of opposing arms and discards the relative directions between rows. We add self-attention to let observations interact across the set. Both the direction-blind and direction-aware variants compute the same symmetric token for each opposing pair. If the shared arm encoder produces $a_j$ and $b_j$, the token projection receives $[a_j+b_j, a_j\odot b_j, |a_j-b_j|]$. The arm encoder sees the near and far intensities relative to the floor, along with the floor itself.
+The sparse heads test whether the 384 values are enough when read well. Each head starts from a ball-only image ranker that is already trained and frozen. Let $s$ be its score (logit). A head predicts a correction $h$ from the samples and the clipped score, and the final score is $s+h$. The last layer of $h$ is initialized to zero, so every head starts exactly at the ball-only ranker, which is its baseline.
 
-Two attention blocks process the tokens, followed by mean and max pooling. At fixed width, the only difference between models is a fixed bias on the attention logits. For axes with unit vectors $u_j$ and $u_k$, let $z_{jk}=|u_j^\top u_k|$. The directional variant adds $12(z_{jk}-1)$, $35(z_{jk}-1)$, $-6z_{jk}$ or zero in the four heads, respectively. Two kernels favor angular neighbors at different scales, one favors separated axes and one remains global. The blind variant uses zero in all four heads. Both can learn interactions from intensity patterns. The directional variant can also relate high-attenuation measurements on neighboring axes even when their order in memory changes. Absolute direction labels are absent in both variants.
+\paragraph{Tokens.} A shared encoder maps the two radii on one arm, taken relative to the floor, to a vector. For axis $j$ this gives $a_j$ (positive arm) and $b_j$ (negative arm). The axis token is $[a_j+b_j,\ a_j\odot b_j,\ |a_j-b_j|]$, which does not depend on which arm is called positive.
 
-At width 48 and separately at width 96, the two variants share initial weights, training batches, objective, checkpoint grid and parameter count. The width comparison increases the arm, token and fusion widths together within each directional condition. During training we jointly permute the tokens and both axes of the bias matrix. Permutation and antipodal sign-swap checks verify that row order and arbitrary arm sign supply no directional labels. The absolute cosine construction retains geometry among unoriented axes. It intentionally identifies each axis with its antipode.
+\paragraph{Direction-blind and direction-aware attention.} Two attention blocks process the 96 tokens, followed by mean and max pooling. Let $z_{jk}=|u_j^\top u_k|\in[0,1]$ be the absolute cosine between axes $j$ and $k$. The \emph{direction-aware} head adds a fixed bias to the attention logits of its four heads: $12(z_{jk}-1)$ and $35(z_{jk}-1)$, which favour neighbouring axes at two scales, $-6z_{jk}$, which favours well-separated axes, and $0$ (global). The \emph{direction-blind} head uses zero bias in all four heads. Otherwise the two heads are identical: same initial weights, training batches, objective, checkpoints and parameter count. Tokens and the bias matrix are permuted together during training, so neither head can read direction from the token order. We train both at widths 48 and 96 (54k and 213k parameters).
 
-\paragraph{Frozen image conditioning and compact refit.}
-We use the two already converged ball-only image scorers. Every new sparse readout conditions on the same standalone logit $s$ via the same clipped rescaling and predicts a residual $h$ on that logit. The standalone image score is thus the exact image-only baseline for both capacities and both geometry conditions. During refitting the image and the queries are fixed at their centered, unaugmented locations. This keeps the sparse and image observations aligned. A fresh compact head uses the same frozen image scores, objective and training examples as the attention heads. The comparison with the archived compact fit probes sensitivity to post-convergence refitting under this protocol.
+\paragraph{Compact heads and controls.} A smaller head (873 parameters) pools the axis tokens without attention. We refit it with the same frozen scores and training data as the attention heads. Further controls test what such a compact head uses: summarizing each axis by one scalar instead of its endpoints, fusing an image embedding instead of the score, randomly re-pairing opposite arms (\emph{sham}), and removing the pairing. A last test adds the paired head on top of the full-field ranker. Details and all control results are in the supplement (Secs.~S2--S3).
 
-\paragraph{What the compact controls test.}
-The original factorial crossed a chord scalar or pooled endpoint set with conditioning on the image logit or a 96-dimensional pre-logit embedding. The chord scalar takes the mean of the two strongest axes after using the weakest floor-subtracted sample on each axis. Each pathway has its own image-only baseline. A learned sham reassigns opposing arms in training and evaluation while retaining the two readings within an arm. A separately trained unpaired variant removes the pairing by self-pairing each arm. These tests vary what the compact head can retain. The practical comparison adds the paired head to the full-image score with a development-selected grayscale morphology term. That comparison probes incremental value when most of the neighborhood is already visible. The supplement gives the matched score equations and full controls (Secs.~S2--S3).
-
-\section{Evaluation at common false-positive rates}
+\section{Experimental setup}
 \label{sec:evaluation}
 
-\paragraph{Roles and model training.}
-LUNA16 supplies released V2 coordinates, included reference nodules and excluded findings from LIDC-IDRI~\cite{setio2017luna16,armato2011lidc}. We use 356 scans for fitting, 44 for checkpoint selection, 45 for additional development choices and 88 for cutoff calibration. The reused evaluation pool contains \EvalScans{} scans from subsets 6--9. Both scans of one repeated subject are quarantined. All current roles are patient-disjoint. Earlier related work examined the benchmark and helped motivate the hypothesis. Related crop studies included every nodule-bearing scan in the current evaluation pool. The original lock and the post-review analyses are retrospective benchmark reuse.
+\paragraph{Data and roles.} We use the LUNA16 release of LIDC-IDRI, with its V2 candidate coordinates, reference nodules and excluded findings~\cite{setio2017luna16,armato2011lidc}. Scans are split by patient: 356 for training, 44 for checkpoint selection, 45 for development choices and 88 for threshold calibration. The evaluation pool contains \EvalScans{} scans from subsets 6--9, with \EvalMarks{} proposals and \EvalLesions{} reference lesions; at most \ProposedLesions{} lesions have a matching proposal. Two scans of one repeated subject are removed. Earlier related studies, including crop studies, used every nodule-bearing scan of this pool, so all results are retrospective evaluations on a reused benchmark. Each comparison and the anatomy grouping were fixed before evaluation scores were computed.
 
-The image arms share the same 48-epoch optimization, augmentation and hard-negative mining schedule. Scores on the complete checkpoint role select epochs. The negatives chosen by mining can change with the visibility condition. The two-scale 3D network learns from the central high-resolution grid and a downsampled contextual grid. The single-stream 3D model rearranges local $2^3$ blocks into channels before processing the full field with one residual hierarchy. It supplies a distinct way to represent local detail and contextual evidence. We also retain an existing three-view comparison using orthogonal stacks of central slices. All three architectures see the same native masks and crop construction, with different spatial access inside the resampled crop.
+\paragraph{Rankers.} The main ranker is a \emph{two-scale} 3D CNN that reads the central high-resolution grid and a downsampled context grid. A \emph{single-stream} 3D network first rearranges $2^3$ blocks into channels and processes the full field in one residual hierarchy. A \emph{three-view} 2D model reads three orthogonal stacks of central slices. All rankers see the same masked crops. Every image condition is trained for 48 epochs with the same optimizer, augmentation and hard-negative mining. The checkpoint with the best CPM on the selection scans is kept. The two two-scale runs (\emph{fit~1} and \emph{fit~2}) differ only in their training seed.
 
-\paragraph{Matched ranking and threshold transfer.}
-We score all \EvalMarks{} original proposals and retain all \EvalLesions{} reference lesions in the denominator. At most \ProposedLesions{} lesions have a reference-matching proposal. A strict distance match to the reference radius credits the highest scoring localization per lesion. Excluded findings exempt matching false marks under the release rules. We reproduce the release's score-dependent 100-mark cap and repeat comparisons with all marks eligible. CPM is the mean interpolated sensitivity at $0.125$, $0.25$, $0.5$, $1$, $2$, $4$ and $8$ FP/scan. We denote the matched sensitivity at 1 FP/scan by $S_1$. Each model reaches the same target on its own FROC. A separate transfer analysis fixes thresholds on the calibration role and reports both sensitivity and the realized FP burden on the reuse pool.
+\paragraph{Metrics.} A proposal detects a lesion if it lies within the reference radius; only the highest-scoring detection per lesion counts, and marks on excluded findings are ignored, following the release rules~\cite{setio2017luna16}. Sensitivity $S(r)$ is measured on each model's own free-response ROC (FROC) at $r$ false positives (FP) per scan. The competition performance metric~\cite{niemeijer2011combining,setio2017luna16} is
+\begin{equation}
+\mathrm{CPM}=\tfrac{1}{7}\textstyle\sum_{r\in\{\frac18,\frac14,\frac12,1,2,4,8\}} S(r),
+\end{equation}
+and $S_1=S(1)$. We keep the release's cap of 100 marks per scan and repeat all comparisons without it (supplement Sec.~S3). Because each model reaches each rate on its own FROC, these are \emph{matched} comparisons of ranking quality. A separate analysis applies thresholds fixed on the calibration scans.
 
-We use 2,000 paired patient bootstrap draws. Intervals reflect uncertainty across patients for fixed fitted models. The primary locked CPM interval for restoration adjusts across three contrasts, including representation and conditioning. Other intervals are pointwise 95\% unless identified otherwise. Training seeds and the eight evaluation shuffles of each fitted sham quantify different variation. New comparisons and the anatomy grouping rule were frozen before joining new evaluation scores. The supplement reports the development, cap, subset and threshold checks (Secs.~S3--S4).
+\paragraph{Uncertainty.} All effects are paired differences between two models on the same proposals, with 95\% intervals from 2,000 patient-level bootstrap draws~\cite{efron1993bootstrap}. The intervals describe uncertainty over patients for the fitted models, not over training runs. The primary band-versus-ball CPM interval for fit~1 is adjusted for the three comparisons fixed before evaluation (band restoration and the compact head's representation and fusion contrasts); other intervals are pointwise.
 
-\paragraph{Anatomical groups on a global FROC.}
-We link reader polygons to the included reference lesions and rasterize their strict majority on the native grid~\cite{armato2011lidc,fedorov2020lidc}. Before score linkage, each lesion with usable contours and a matching proposal is assigned by whether any matching proposal's centered dense band can sample a majority-labeled voxel. The group definition uses all reference-matching proposals before the score cap. For each fit and patient draw, the entire stream sets a single false-positive axis. Each group's true-positive counts are interpolated on that axis and normalized by the group's lesion count. Thus comparisons at 1 FP/scan use the same global budget even when the model changes which false proposals survive. Unlinked lesions and lesions beyond proposal coverage remain in the global reference denominator.
+\paragraph{Anatomy groups.} Reader contours from LIDC-IDRI~\cite{armato2011lidc,fedorov2020lidc} are rasterized on the native grid, and a voxel is \emph{lesion tissue} if a strict majority of the linked readers include it. Before scores were joined, each lesion with contours and a matching proposal was labelled \emph{reached} if the band of any matching proposal contains a lesion-tissue voxel, and \emph{never reached} otherwise. For each model, the whole proposal stream defines one FP axis; each group's sensitivity is read on this shared axis and divided by the group size. Comparisons at 1~FP/scan therefore use the same global false-positive budget.
