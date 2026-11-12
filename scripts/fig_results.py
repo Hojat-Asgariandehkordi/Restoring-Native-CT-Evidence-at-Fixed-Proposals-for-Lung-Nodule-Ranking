@@ -213,33 +213,45 @@ def sparse(path):
     save(fig, path)
 
 
-# ----------------------------------------------------------------------------- Fig. 6
+# ----------------------------------------------------------------------------- Fig. 8
 def anatomy(path):
-    fig, axes = plt.subplots(1, 2, figsize=(style.COL, 1.9), sharey=True)
-    fig.subplots_adjust(left=0.15, right=0.99, bottom=0.36, top=0.88, wspace=0.08)
+    fig = plt.figure(figsize=(style.TEXT, 1.95))
+    r = fig.add_axes((0.06, 0.30, 0.20, 0.56))
+    axes = [fig.add_axes((0.375, 0.30, 0.295, 0.56)), fig.add_axes((0.695, 0.30, 0.295, 0.56))]
+    # (a) how often the band reaches lesion tissue, by reference diameter
+    rows = D.reach_by_diameter()
+    for i, (lab, n, k) in enumerate(rows):
+        r.bar(i, 100, color="#eeeeee", width=0.62, edgecolor="#cccccc", lw=0.5)
+        r.bar(i, 100 * k / n, color=C["overlap"], width=0.62)
+        r.text(i, 100 * k / n + 3, f"{k}/{n}", ha="center", va="bottom", fontsize=6.8)
+    r.set_xticks(range(len(rows)), [lab.replace("\u2013<", "\u2013") for lab, _, _ in rows])
+    r.set_ylim(0, 105)
+    r.set_ylabel("Lesions reached (%)")
+    r.set_xlabel("Reference diameter")
+    r.grid(axis="y")
+    r.set_axisbelow(True)
+    panel(r, "a", "Which lesions the band reaches", x=-0.25, y=1.05)
     groups = (("never_overlap", C["never"], "o"), ("any_overlap", C["overlap"], "s"))
-    for ax, seed, letter in zip(axes, D.SEEDS, "ab"):
+    for ax, seed, letter in zip(axes, D.SEEDS, "bc"):
         for k, (g, col, m) in enumerate(groups):
             xs = np.array(D.RATES) * (0.93 if k == 0 else 1.075)
             for x, (e, lo, hi) in zip(xs, D.anatomy(seed, g)):
                 ax.vlines(x, lo, hi, color=col, lw=0.95)
                 ax.hlines([lo, hi], x / 1.05, x * 1.05, color=col, lw=0.85)
-            ax.plot(xs, [r[0] for r in D.anatomy(seed, g)], marker=m, ms=3.2, color=col, lw=0.9)
-        rate_axis(ax, label=False)
-        ax.set_xticklabels(["1/8", "", "1/2", "", "2", "", "8"])
+            ax.plot(xs, [q[0] for q in D.anatomy(seed, g)], marker=m, ms=3.2, color=col, lw=0.9)
+        rate_axis(ax)
         zero_line(ax, vertical=False)
         ax.axvline(1, color="#bbbbbb", lw=0.6, ls=":")
         ax.grid(axis="y")
-        ax.set_title(f"({letter}) Two-scale 3D, {SEED_NAME[seed].lower()}", fontsize=7.8, pad=3,
-                     fontweight="bold")
-    axes[0].set_ylabel("Band $-$ ball sensitivity\n(points)", linespacing=1.0)
-    axes[0].set_ylim(-8, 40)
-    fig.supxlabel("False positives per scan (global axis)", fontsize=7.6, y=0.17)
+        ax.set_ylim(-8, 43)
+        panel(ax, letter, f"Gain by group, two-scale 3D {SEED_NAME[seed].lower()}", x=0.0, y=1.05)
+    axes[0].set_ylabel("Band $-$ ball sensitivity (points)")
+    axes[1].set_yticklabels([])
     h = [Line2D([], [], color=col, marker=m, ms=3.4, lw=0.9,
                 label=f"{'Band reaches lesion' if g == 'any_overlap' else 'Band never reaches lesion'} "
                       f"($n={D.anatomy_n(g)}$)") for g, col, m in groups]
-    fig.legend(handles=h, loc="lower center", ncol=2, fontsize=6.6, bbox_to_anchor=(0.55, -0.01),
-               handlelength=1.6, columnspacing=1.0)
+    axes[1].legend(handles=h, loc="upper right", fontsize=6.5, handlelength=1.6, labelspacing=0.2,
+                   borderaxespad=0.1)
     save(fig, path)
 
 

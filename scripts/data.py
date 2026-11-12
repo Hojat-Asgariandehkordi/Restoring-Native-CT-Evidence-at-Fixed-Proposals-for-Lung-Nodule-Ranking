@@ -165,3 +165,17 @@ def transfer(seed):
     t = AGG["original"][seed]["pooled_capped"]["contrasts"]["restore"]["transfer"]
     fp = t["fp_per_scan"]
     return pts(t["sensitivity"]), (fp["estimate"], fp["lo"], fp["hi"])
+
+
+# --- Band reach by reference diameter -------------------------------------------
+def reach_by_diameter():
+    """geometry/diameter_stratum/<stratum>/{lesions, native_band/lesions}: linked lesions with a
+    matching proposal, and how many of them the band of some matching proposal reaches."""
+    g = AGG["geometry"]["diameter_stratum"]
+    order = ["<6 mm", "6–<10 mm", "≥10 mm"]
+    return [(k, g[k]["lesions"], g[k]["native_band"]["lesions"]) for k in order]
+
+
+def fixture():
+    """fixture/*: implementation checks against literal full-volume masking."""
+    return AGG["fixture"]

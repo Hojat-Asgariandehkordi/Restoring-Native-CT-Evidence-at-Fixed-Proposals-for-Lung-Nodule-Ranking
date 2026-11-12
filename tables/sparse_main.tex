@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Absolute CPM and $S_1$ (\%) of every readout of the 384 sparse samples, with the image conditions for reference. $^\ast$Selected the first checkpoint; scores identical to the ball-only ranker.}
+\label{tab:sparse}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Fit 1} & \multicolumn{2}{c}{Fit 2} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+Readout & CPM & $S_1$ & CPM & $S_1$ \\
+\midrule
+Ball only (frozen) & 83.58 & 85.68 & 82.83 & 85.68 \\
+Compact (original fit) & 84.44 & 87.20 & 82.96 & 85.90 \\
+Compact refit & 85.06 & 88.07 & 82.93 & 85.47 \\
+Attention, blind, 48 & 84.38 & 86.98 & 82.83$^\ast$ & 85.68 \\
+Attention, directional, 48 & 84.57 & 86.33 & 82.62 & 85.90 \\
+Attention, blind, 96 & 84.54 & 87.42 & 82.83$^\ast$ & 85.68 \\
+Attention, directional, 96 & 84.38 & 86.55 & 82.83$^\ast$ & 85.68 \\
+\midrule
+Dense band & 87.60 & 89.80 & 87.05 & 89.15 \\
+Full field & 89.37 & 90.67 & 88.63 & 90.46 \\
+\bottomrule
+\end{tabular}
+\end{table}
