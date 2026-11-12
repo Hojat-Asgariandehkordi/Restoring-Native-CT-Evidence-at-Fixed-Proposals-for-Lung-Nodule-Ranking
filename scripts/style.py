@@ -68,7 +68,7 @@ C = {
 }
 LIGHT = {"ball": "#cfdcec", "band": "#f3d3bf", "full": "#e6e6e6", "sources": "#bfe3dc"}
 SEED_MARK = {"3691": ("o", True), "9143": ("s", False)}   # marker, filled
-SEED_NAME = {"3691": "Fit 1", "9143": "Fit 2"}
+SEED_NAME = {"3691": "Seed 1", "9143": "Seed 2"}
 
 
 def save(fig, path):

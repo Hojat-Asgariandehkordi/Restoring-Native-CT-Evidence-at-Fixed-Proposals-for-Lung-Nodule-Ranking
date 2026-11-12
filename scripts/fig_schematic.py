@@ -213,7 +213,7 @@ def teaser(path):
 
     # (b) the intervention
     xb0 = sep + 0.02
-    fig.text(xb0, 0.975, "(b) Our test: same crop, network and training; only the visible CT changes",
+    fig.text(xb0, 0.975, "(b) Fixed crop, network and training; only the visible native voxels vary",
              fontsize=8.5, fontweight="bold", va="top")
     bs = 1.30
     wb, hb = bs / W, bs / H
@@ -336,7 +336,7 @@ def visibility(path):
 
     # (c) mask before interpolation, 1D, neutral colours
     fig.add_artist(plt.Line2D([0.008, 0.992], [0.205, 0.205], color="#cccccc", lw=0.5))
-    fig.text(0.008, 0.19, "(c) Why we mask before resampling (1D example)", fontsize=8.5,
+    fig.text(0.008, 0.19, "(c) Masking before vs. after resampling (1D example)", fontsize=8.5,
              fontweight="bold", va="top")
     ax = fig.add_axes((0.0, 0.0, 1.0, 0.15))
     ax.set_xlim(0, 1)

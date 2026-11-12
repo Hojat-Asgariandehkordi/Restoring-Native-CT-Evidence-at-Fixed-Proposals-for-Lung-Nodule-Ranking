@@ -3,7 +3,7 @@ Writes tables/visibility_main.tex. Paired effects and their intervals are in Fig
 the full wide table (with intervals) stays in the supplement as tables/visibility.tex."""
 import data as D
 
-ROWS = [("3691", "Two-scale 3D, fit 1"), ("9143", "Two-scale 3D, fit 2"),
+ROWS = [("3691", "Two-scale 3D, seed 1"), ("9143", "Two-scale 3D, seed 2"),
         ("single", "Single-stream 3D"), ("tri", "Three-view 2D")]
 
 lines = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{4.5pt}",
@@ -22,7 +22,7 @@ print("\n".join(lines))
 
 # ---- Absolute performance of every sparse readout (one column) -> tables/sparse_main.tex
 # Source: new/spatial_<seed>_pooled_capped/methods/<m>/{cpm,at_1}
-SP = [("ball", "Ball only (frozen)"), ("pooled", "Compact (original fit)"), ("compact", "Compact refit"),
+SP = [("ball", "Ball only (frozen)"), ("pooled", "Compact head, initial fit"), ("compact", "Compact head, refit"),
       ("blind48", "Attention, blind, 48"), ("spatial48", "Attention, directional, 48"),
       ("blind96", "Attention, blind, 96"), ("spatial96", "Attention, directional, 96"),
       ("band", "Dense band"), ("full", "Full field")]
@@ -31,7 +31,7 @@ L = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{4pt
      r"\caption{Absolute CPM and $S_1$ (\%) of every readout of the 384 sparse samples, with the image "
      r"conditions for reference. $^\ast$Selected the first checkpoint; scores identical to the ball-only ranker.}",
      r"\label{tab:sparse}", r"\begin{tabular}{@{}lrrrr@{}}", r"\toprule",
-     r" & \multicolumn{2}{c}{Fit 1} & \multicolumn{2}{c}{Fit 2} \\",
+     r" & \multicolumn{2}{c}{Seed 1} & \multicolumn{2}{c}{Seed 2} \\",
      r"\cmidrule(lr){2-3}\cmidrule(l){4-5}", r"Readout & CPM & $S_1$ & CPM & $S_1$ \\", r"\midrule"]
 for m, name in SP:
     cells = []
@@ -51,9 +51,11 @@ G = [("any_overlap", "Reaches lesion"), ("never_overlap", "Never reaches"),
      ("unlinked", "No contours"), ("linked_without_proposal", "No proposal")]
 L = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{3.5pt}",
      r"\caption{Sensitivity (\%) at a global 1 FP/scan by anatomy group, for the ball and band rankers. "
-     r"All 461 lesions stay in the global FROC. Diam.: median reference diameter (mm).}",
+     r"Of the 461 reference lesions, 455 have usable contours and all remain in the global FROC. Diam.: median reference "
+     r"diameter (mm). Between-group difference in the band$-$ball gain: $+13.16\\,[3.68,\\,22.85]$ (seed~1) and "
+     r"$+15.61\\,[4.69,\\,24.92]$ (seed~2).}",
      r"\label{tab:anatomy}", r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
-     r" & & & \multicolumn{2}{c}{Fit 1} & \multicolumn{2}{c}{Fit 2} \\",
+     r" & & & \multicolumn{2}{c}{Seed 1} & \multicolumn{2}{c}{Seed 2} \\",
      r"\cmidrule(lr){4-5}\cmidrule(l){6-7}",
      r"Group & $n$ & Diam. & Ball & Band & Ball & Band \\", r"\midrule"]
 for g, name in G:

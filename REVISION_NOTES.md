@@ -55,6 +55,17 @@ An independent reviewer agent with no part in making the figures critiqued all s
 - BioRender files: sample schematic https://app.biorender.com/illustrations/5fd2809f526ed4625a31e6a4 ; rejected cube https://app.biorender.com/illustrations/fb05921b55ff4557f4b513e9
 - Full-resolution export: `figures/biorender/probes.jpg` (2752×1536, fetched via Overleaf "From external URL"). `figures/reference/*_ref.png` are the drafts used in the briefs.
 
+## CVPR writing-style pass
+Abstract, introduction, related work, method, setup, results, discussion and conclusion were rewritten in CVPR register, with every number, equation, label and claim kept:
+- Intro: the Q&A bullets ("Access or architecture?") became a numbered contribution statement (i)–(iii) with section pointers.
+- Method: the "Tokens." / "Direction-blind…" sub-headings became continuous prose; the implementation checks shrank to two sentences (the numbers are in supplement S2); the subsections were renamed ("Masking before resampling", "The exterior band", "Sparse readout heads").
+- Setup: the step-by-step training description became a single compact implementation-details paragraph; the data splits are named once (training / selection / development / calibration) and used consistently.
+- Results: subsection titles are now noun phrases. Bracketed intervals were moved out of the prose into figures and tables (the between-group anatomy differences now sit in the Tab. 3 caption). Trial-protocol wording ("prespecified non-inferiority", "target") was rephrased, and lab-log phrasing ("audit", "scores were joined", "rules out a defect in the pipeline") was removed.
+- Terminology: "fit 1/2" became **"seed 1/2"** everywhere, figures included; "proposal" is used for locations (and "candidate generator" for the method); in-house terms were dropped ("floor" → background level, "arm" → half-axis, "sham" → shuffled pairs, "chord scalar" → single scalar, "first/original fit" → initial fit).
+- Figures: panel titles are descriptive rather than headlines or questions (for example "Visibility intervention at fixed proposals", "Masking before vs. after resampling", "Compact-head controls").
+- Checked by a fresh style-reviewer agent acting as a CVPR area chair. Related work and conclusion: "reads like CVPR". Abstract, intro, method, setup and discussion: minor polish, applied. Results §5.4–5.6: rewritten as above.
+- The supplement is still mostly the authors' original text; only the sentence about the seed-2 heads was harmonized.
+
 ## Open items for the group
 1. **Fit-2 attention heads did not train (needs a rerun).** For seed 9143, the direction-blind heads at widths 48 and 96 and the direction-aware head at width 96 selected their first checkpoint (epoch 4), and their CPM equals the frozen ball scorer exactly (0.8283). The v6 text read their contrasts as evidence about geometry and width; for example, the "width-96 gap of +4.21" is just band versus ball. The revision states this openly in Sec. 5.3, the figure, the limitations and supplement Sec. S4. **Suggested experiment:** retrain these three heads (for example with a nonzero-init last layer, a higher learning rate, or selection that excludes epoch 4), or report results from a third seed.
 2. **Verify the 14 new references** at the end of `references.bib`.

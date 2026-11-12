@@ -63,8 +63,8 @@ def restoration(path):
         p = ax.get_position()
         ax.set_position((p.x0 + dx, p.y0, p.width - 0.03, p.height))
 
-    rows = [("Two-scale 3D, fit 1", lambda f: D.restore("3691", "cpm_adjusted" if f == "cpm" else f)),
-            ("Two-scale 3D, fit 2", lambda f: D.restore("9143", f)),
+    rows = [("Two-scale 3D, seed 1", lambda f: D.restore("3691", "cpm_adjusted" if f == "cpm" else f)),
+            ("Two-scale 3D, seed 2", lambda f: D.restore("9143", f)),
             ("Single-stream 3D", lambda f: D.single_stream(f)),
             ("Three-view 2D", lambda f: D.three_view(f))]
     for ax, field, title in ((a1, "cpm", "CPM"), (a2, "at_1", "$S_1$ (at 1 FP/scan)")):
@@ -158,7 +158,7 @@ def coverage(path):
     forest_axis(b, [r[0] for r in rows])
     b.set_xlim(-1.5, 7.2)
     b.set_xlabel("Paired difference (points), same two-scale network", labelpad=1.5)
-    panel(b, "b", f"Band beats sources by {D.sources('band_minus_sources')[0]:+.1f} CPM", x=-0.43, y=1.04)
+    panel(b, "b", "Paired effects in the same network", x=-0.43, y=1.04)
     h = [Line2D([], [], color="#444444", marker="o", ls="", ms=3.6, label="CPM"),
          Line2D([], [], color="#444444", marker="D", ls="", ms=3.4, label="$S_1$")]
     b.legend(handles=h, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2, fontsize=6.5,
@@ -167,13 +167,13 @@ def coverage(path):
 
 
 # ----------------------------------------------------------------------------- Fig. 5
-SPARSE_ROWS = [("pooled", "Compact head (first fit)"), ("compact", "Compact head (refit)"),
+SPARSE_ROWS = [("pooled", "Compact head (initial fit)"), ("compact", "Compact head (refit)"),
                ("blind48", "Attention, blind, width 48"), ("spatial48", "Attention, directional, 48"),
                ("blind96", "Attention, blind, width 96"), ("spatial96", "Attention, directional, 96"),
                ("band", "Ball + band (image)")]
 CTRL_ROWS = [("representation_at_logit", "Endpoints $-$ one scalar"),
              ("fusion_at_endpoint", "Embedding $-$ score input"),
-             ("logit_pair_vs_sham", "True pairs $-$ shuffled"),
+             ("logit_pair_vs_sham", "True $-$ shuffled pairs"),
              ("logit_pair_vs_unpaired", "True pairs $-$ unpaired"),
              ("increment_over_morphology", "Full + pairs $-$ full + morph.")]
 
@@ -202,7 +202,7 @@ def sparse(path):
     a.set_xlim(-1.8, 6.6)
     a.set_xlabel("CPM gain over the ball-only ranker (points)", labelpad=1.5)
 
-    panel(a, "a", "Sparse readouts stay far below the band", x=-0.80, y=1.03)
+    panel(a, "a", "Sparse readouts versus the band", x=-0.80, y=1.03)
     h = seed_handles("#444444")
     a.legend(handles=h, loc="upper right", ncol=1, fontsize=6.3, handletextpad=0.2,
              borderaxespad=0.2, labelspacing=0.25)
@@ -220,7 +220,7 @@ def sparse(path):
     b.text(1.06, 0.12, "+1 target", fontsize=6.0, color="#1a1a1a", va="bottom")
     b.set_xlim(-1.8, 2.0)
     b.set_xlabel("Paired CPM difference (points)", labelpad=1.5)
-    panel(b, "b", "Compact-head controls: all near zero", x=-0.80, y=1.05)
+    panel(b, "b", "Compact-head controls", x=-0.80, y=1.05)
     save(fig, path)
 
 
@@ -281,8 +281,8 @@ def robustness(path):
     a = fig.add_axes((0.31, 0.40, 0.67, 0.38))
     b1 = fig.add_axes((0.31, 0.085, 0.31, 0.135))
     b2 = fig.add_axes((0.67, 0.085, 0.31, 0.135))
-    comps = [("3691", "Band $-$ ball, fit 1"), ("9143", "Band $-$ ball, fit 2"),
-             ("sources", "Band $-$ sources, fit 1"), ("single", "Band $-$ ball,\nsingle-stream")]
+    comps = [("3691", "Band $-$ ball, seed 1"), ("9143", "Band $-$ ball, seed 2"),
+             ("sources", "Band $-$ sources, seed 1"), ("single", "Band $-$ ball,\nsingle-stream")]
     styles = [("pooled_capped", "All 353 scans", "#1a1a1a", "o", True),
               ("confirmation_capped", f"Confirmation half ({D.scope_scans('confirmation_capped')})", "#666666", "^", True),
               ("replication_capped", f"Replication half ({D.scope_scans('replication_capped')})", "#666666", "v", False),
@@ -296,7 +296,7 @@ def robustness(path):
     forest_axis(a, [c[1] for c in comps], ylim_pad=0.5)
     a.set_xlim(-1.5, 9.2)
     a.set_xlabel("Paired CPM difference (points)", labelpad=1.5)
-    panel(a, "a", "Estimates agree across halves and without the cap", x=-0.42, y=1.31)
+    panel(a, "a", "Pool halves and uncapped evaluation", x=-0.42, y=1.31)
     h = [Line2D([], [], color=col, marker=m, ls="", ms=3.4, mfc=col if fill else "white", label=lab)
          for _, lab, col, m, fill in styles]
     h = [h[0], h[2], h[1], h[3]]
