@@ -4,7 +4,7 @@
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/restoration.pdf}
-  \caption{\textbf{Restoring the band improves ranking at fixed proposals.} (a)~Paired band-minus-ball effects on CPM and on $S_1$ for every architecture, with 95\% patient-bootstrap intervals. Filled markers: interval above zero. $^\dagger$Adjusted for three comparisons. (b)~FROC curves of the two two-scale fits (solid: fit~1, dashed: fit~2), each model evaluated at its own thresholds; the dotted line marks 1~FP/scan ($S_1$). (c)~Band-minus-ball sensitivity at each of the seven operating points that make up CPM; fit~1 filled, fit~2 open. The point estimate is positive at all seven rates in both fits; at the three lowest rates, the fit-1 intervals reach zero.}
+  \caption{\textbf{Restoring the band improves ranking at fixed proposals.} (a)~Paired band-minus-ball effects on CPM and on $S_1$ for every architecture, with 95\% patient-bootstrap intervals. $^\dagger$Adjusted for three comparisons. (b)~FROC curves of the two two-scale fits (solid: fit~1, dashed: fit~2), each model evaluated at its own thresholds; the dotted line marks 1~FP/scan ($S_1$). (c)~Band-minus-ball sensitivity at each of the seven operating points that make up CPM; fit~1 filled, fit~2 open. The point estimate is positive at all seven rates in both fits; at the three lowest rates, the fit-1 intervals reach zero.}
   \label{fig:restoration}
 \end{figure*}
 
@@ -16,7 +16,7 @@ With only the native ball, the two-scale ranker reaches \BallCpm\% CPM. Adding t
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/robustness.pdf}
-  \caption{\textbf{Robustness of the main effects.} (a)~CPM effects of band versus ball (both two-scale fits and the single-stream network) and of band versus native sources (two-scale fit~1), on the whole pool, on its two halves (LUNA16 subsets split before evaluation into a confirmation and a replication half) and with the 100-mark cap removed. (b)~Band-minus-ball change when each model's threshold is fixed on the 88 calibration scans: sensitivity (left) and realized FP burden (right). 95\% patient-bootstrap intervals.}
+  \caption{\textbf{Robustness of the main effects.} (a)~CPM effects of band versus ball (both two-scale fits and the single-stream network) and of band versus native sources (two-scale fit~1), on the whole pool, on its two halves (LUNA16 subsets split before evaluation into a confirmation and a replication half) and with the 100-mark cap removed; where markers overlap, the estimates agree to the plotted precision. (b)~Band-minus-ball change when each model's threshold is fixed on the 88 calibration scans: sensitivity (left, orange) and realized FP burden (right, grey); fit~1 filled circles, fit~2 open squares. 95\% patient-bootstrap intervals.}
   \label{fig:robustness}
 \end{figure}
 
@@ -32,7 +32,7 @@ Matched comparisons evaluate each model at the same FP rate on its own FROC. Wit
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/coverage.pdf}
-  \caption{\textbf{Native sources versus the dense band in the same image network} (two-scale 3D, fit~1). (a)~Mean number of native voxels outside the ball that reach the crop, per proposal: the band shows 5.9 times as many as the native sources. (b)~Paired effects on CPM (filled circles) and $S_1$ (open diamonds), with 95\% intervals.}
+  \caption{\textbf{Native sources versus the dense band in the same image network} (two-scale 3D, fit~1). (a)~Mean number of native voxels outside the ball that reach the crop, per proposal: the band shows 5.9 times as many as the native sources. (b)~Paired effects on CPM (circles) and $S_1$ (diamonds), with 95\% intervals.}
   \label{fig:coverage}
 \end{figure}
 
@@ -44,7 +44,7 @@ A sparse head could fall short simply because its evidence arrives late, after t
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/sparse.pdf}
-  \caption{\textbf{Sparse readouts of the same 384 samples.} (a)~CPM gain of each head over its own frozen ball-only ranker, compared with the dense band; fit~1 filled, fit~2 open. Grey italic notes mark fit-2 heads that selected their first checkpoint and reproduce the ball-only ranker exactly. Direction-aware minus direction-blind in fit~1: \GeometrySmallPrimary{} points at width 48 and \GeometryLargePrimary{} at width 96. (b)~Paired CPM differences (A $-$ B) for the compact-head controls (supplement Sec.~S3); the dotted mark is the $+1$ point target set in advance, for the last row only. All intervals are 95\% patient-bootstrap intervals.}
+  \caption{\textbf{Sparse readouts of the same 384 samples.} (a)~CPM gain of each head over its own frozen ball-only ranker, compared with the dense band; fit~1 filled, fit~2 open; dark grey: compact heads, purple: attention heads, orange: band. Grey italic notes mark fit-2 heads that selected their first checkpoint and reproduce the ball-only ranker exactly. Direction-aware minus direction-blind in fit~1: \GeometrySmallPrimary{} points at width 48 and \GeometryLargePrimary{} at width 96. (b)~Paired CPM differences (A $-$ B) for the compact-head controls: two endpoints versus one scalar per axis, an image embedding versus the image score as input, true versus shuffled or absent pairing of opposite arms, and the paired head versus a grey-level morphology term on top of the full-field ranker (supplement Sec.~S3); the dotted mark is the $+1$ point target set in advance, for the last row only. All intervals are 95\% patient-bootstrap intervals.}
   \label{fig:sparse}
 \end{figure}
 
@@ -62,7 +62,7 @@ The compact controls in Fig.~\ref{fig:sparse}b point the same way; Sec.~\ref{sec
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/anatomy.pdf}
-  \caption{\textbf{The band helps most where it reaches the lesion.} (a)~Share of linked lesions with a matching proposal whose majority-reader contour the band reaches at some matching proposal, by reference diameter. (b,c)~Band-minus-ball sensitivity on the global FP axis for lesions the band reaches (orange, $n=72$) and never reaches (grey, $n=377$); the dotted line marks 1~FP/scan. Groups were fixed before scores were joined. 95\% patient-bootstrap intervals.}
+  \caption{\textbf{The band helps most where it reaches the lesion.} (a)~Share of linked lesions with a matching proposal whose majority-reader contour the band reaches at some matching proposal, by reference diameter (the ball radius is $10\mm$ and the band starts at $10.3\mm$). (b,c)~Band-minus-ball sensitivity on the global FP axis for lesions the band reaches (orange, $n=72$) and never reaches (grey, $n=377$); the dotted line marks 1~FP/scan. Groups were fixed before scores were joined. 95\% patient-bootstrap intervals.}
   \label{fig:anatomy}
 \end{figure*}
 

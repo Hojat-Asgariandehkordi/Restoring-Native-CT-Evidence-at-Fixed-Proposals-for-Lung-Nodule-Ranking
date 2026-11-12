@@ -82,9 +82,17 @@ def compose(layers, seed):
 def vessel_case():
     """A vessel running obliquely through the slice: inside 10 mm it is a compact bright blob,
     outside it continues as a tube in both directions and branches."""
-    knot = blob(0.4, -0.3, 4.2, hu=45, lob=(0.10, 0.06), seed=3, soft=0.5)
-    v = [curve([(-17, -12), (-11, -8.5), (-5.5, -3.6)], 1.25, 1.55, 55),
-         curve([(5.2, 3.4), (11, 7.5), (17, 13)], 1.55, 1.2, 55),
+    # oblique section: an ellipse elongated along the vessel, same width as the tube
+    th = np.deg2rad(34)
+    xr, yr = X * np.cos(th) + Y * np.sin(th), -X * np.sin(th) + Y * np.cos(th)
+    d = np.hypot(xr / 4.6, yr / 2.5) - 1
+    knot = (1 / (1 + np.exp(d / 0.12)), 45 + gaussian_filter(np.random.default_rng(3).normal(0, 1, X.shape), 3) * 40)
+    # within ~10 mm the vessel runs out of the slice (only faint partial-volume traces);
+    # beyond the ball it returns into the slice as a bright tube
+    v = [curve([(-9.0, -6.1), (-6.2, -4.2), (-3.6, -2.4)], 1.3, 1.6, -560),
+         curve([(3.6, 2.4), (6.2, 4.2), (9.0, 6.1)], 1.6, 1.3, -560),
+         curve([(-17, -11.5), (-13, -8.8), (-9.0, -6.1)], 2.0, 1.9, 50),
+         curve([(9.0, 6.1), (13, 8.8), (17, 11.5)], 1.9, 2.0, 50),
          curve([(10, 7), (13.5, 2), (17, -2)], 0.9, 0.7, 40),
          curve([(-17, 9), (-11, 11), (-6, 17)], 0.8, 0.6, 30),
          curve([(9, -17), (11, -11), (17, -9)], 0.7, 0.6, 30)]
@@ -165,8 +173,8 @@ def ring(ax, r, color, lw=0.9, ls="-", alpha=1):
 
 
 def scalebar(ax, color="white"):
-    ax.plot([-14.6, -9.6], [-14.4, -14.4], color=color, lw=1.4, solid_capstyle="butt", zorder=7)
-    ax.text(-12.1, -13.6, "5 mm", color=color, ha="center", va="bottom", fontsize=6.2, zorder=7)
+    ax.plot([-14.6, -9.6], [14.4, 14.4], color=color, lw=1.4, solid_capstyle="butt", zorder=7)
+    ax.text(-12.1, 13.6, "5 mm", color=color, ha="center", va="top", fontsize=6.2, zorder=7)
 
 
 # ----------------------------------------------------------------------------- Fig. 1
@@ -192,6 +200,10 @@ def teaser(path):
                 ax.set_title(t, fontsize=7.8, pad=2.5)
             if i == 1 and j == 0:
                 scalebar(ax)
+            if i == 1:
+                ax.text(0.5, 0.04, ["tube continues: vessel", "round mass: nodule"][j], transform=ax.transAxes,
+                        ha="center", va="bottom", fontsize=6.4, color="white", fontweight="bold",
+                        bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.65))
     fig.text(xa[0] - 0.008, ya[0] + h / 2, "10 mm ball\nonly", ha="right", va="center", fontsize=7.4,
              color=C["ball"], fontweight="bold", linespacing=1.05)
     fig.text(xa[0] - 0.008, ya[1] + h / 2, "Full\nview", ha="right", va="center", fontsize=7.4,
@@ -237,7 +249,7 @@ def teaser(path):
              ha="center", va="top", fontsize=6.6, color="#555555", linespacing=1.05)
     # hatch key
     kx = xa[0]
-    ky = 0.02
+    ky = 0.005
     fig.add_artist(Rectangle((kx, ky), 0.016, 0.04, transform=fig.transFigure, facecolor="black",
                              edgecolor="#444444", hatch="////", lw=0.5))
     fig.text(kx + 0.022, ky + 0.02, "hidden: set to air before resampling", va="center", fontsize=6.8)
@@ -342,6 +354,9 @@ def visibility(path):
         ax.scatter([xout], [yy], marker="s", s=30, facecolor="black" if row else "#d9d9d9",
                    edgecolor="#444444", hatch="////" if row else None, lw=0.6, zorder=3)
         ax.scatter([xq], [yy], marker="D", s=16, facecolor="white", edgecolor=col, lw=0.9, zorder=3)
+        if row == 0:
+            ax.text(xq, yy + 0.13, "sample", ha="center", fontsize=6.5)
+            ax.text(0.168, yy + 0.13, "ball edge", ha="left", fontsize=6.0, color="#777777")
         ax.text(xin, yy + 0.13, "visible $-500$ HU", ha="center", fontsize=6.5)
         ax.text(xout, yy + 0.13, f"hidden: {hidden_val}", ha="center", fontsize=6.5)
         ax.text(0.31, yy, f"{mark}", color=col, fontsize=9, va="center", fontweight="bold")

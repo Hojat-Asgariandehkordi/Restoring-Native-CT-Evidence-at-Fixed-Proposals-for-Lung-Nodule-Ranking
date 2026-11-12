@@ -59,7 +59,7 @@ C = {
     "band": "#c4511c",      # burnt orange
     "full": "#555555",      # grey
     "sources": "#1b8a7a",   # teal
-    "blind": "#9a9a9a",     # neutral grey
+    "blind": "#7a4fa3",     # attention heads share purple; rows are labelled
     "spatial": "#7a4fa3",   # purple
     "compact": "#3d3d3d",
     "never": "#4d4d4d",

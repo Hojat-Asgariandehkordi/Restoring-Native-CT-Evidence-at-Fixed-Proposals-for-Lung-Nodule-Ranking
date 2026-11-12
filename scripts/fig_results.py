@@ -10,6 +10,7 @@ Intervals are paired-patient bootstrap 95% intervals (2,000 draws); the primary 
 restoration interval is the multiplicity-adjusted one (marked with a dagger).
 """
 import numpy as np
+import matplotlib.patheffects as pe
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FixedLocator, NullLocator
 
@@ -69,7 +70,7 @@ def restoration(path):
     for ax, field, title in ((a1, "cpm", "CPM"), (a2, "at_1", "$S_1$ (at 1 FP/scan)")):
         for i, (name, fn) in enumerate(rows):
             e, lo, hi = fn(field)
-            ci_bar(ax, len(rows) - 1 - i, e, lo, hi, C["band"], filled=lo > 0)
+            ci_bar(ax, len(rows) - 1 - i, e, lo, hi, C["band"])
             dag = "$^\\dagger$" if (i == 0 and field == "cpm") else ""
             ax.text(hi + 0.25, len(rows) - 1 - i, f"{e:+.1f}{dag}", ha="left", va="center", fontsize=6.6,
                     color=C["band"])
@@ -80,7 +81,7 @@ def restoration(path):
         ax.set_xlabel("Band $-$ ball (points)")
     a2.set_yticklabels([])
     panel(a1, "a", "Band $-$ ball, every architecture", x=-0.02, y=1.12)
-    a2.text(1.0, -0.43, "filled: 95% CI above 0;  $\\dagger$adjusted CI", transform=a2.transAxes, ha="right",
+    a2.text(1.0, -0.43, "$\\dagger$adjusted CI", transform=a2.transAxes, ha="right",
             fontsize=6.3, color="#555555")
 
     rates, _ = D.froc("3691")
@@ -99,8 +100,9 @@ def restoration(path):
     r1, c1 = D.froc("3691")
     i0 = int(np.argmin(np.abs(np.array(r1) - 0.30)))
     for k, lab, dy in (("full", "Full", 3.0), ("band", "Band", -2.6), ("ball", "Ball", -4.2)):
-        b.text(0.30, c1[k][i0] + dy, lab, color=C[k], fontsize=6.8, fontweight="bold", ha="center",
-               va="center")
+        t = b.text(0.30, c1[k][i0] + dy, lab, color=C[k], fontsize=6.8, fontweight="bold", ha="center",
+                   va="center", zorder=6)
+        t.set_path_effects([pe.withStroke(linewidth=2.2, foreground="white")])
     hb = [Line2D([], [], color="#444444", lw=1.0, ls=ls, label=SEED_NAME[s])
           for s, ls in zip(D.SEEDS, ("-", (0, (3, 1.6))))]
     b.legend(handles=hb, loc="lower right", fontsize=6.5, handlelength=1.8, labelspacing=0.2,
@@ -149,7 +151,7 @@ def coverage(path):
             ("Band $-$ sources", "band_minus_sources", C["band"])]
     for i, (lab, key, col) in enumerate(rows):
         y = len(rows) - 1 - i
-        for dy, field, filled in ((0.14, "cpm", True), (-0.14, "at_1", False)):
+        for dy, field, filled in ((0.14, "cpm", True), (-0.14, "at_1", True)):
             e, lo, hi = D.sources(key, field)
             ci_bar(b, y + dy, e, lo, hi, col, marker="o" if field == "cpm" else "D", filled=filled, ms=3.6,
                    lw=1.1, cap=0.09)
@@ -158,7 +160,7 @@ def coverage(path):
     b.set_xlabel("Paired difference (points), same two-scale network", labelpad=1.5)
     panel(b, "b", f"Band beats sources by {D.sources('band_minus_sources')[0]:+.1f} CPM", x=-0.43, y=1.04)
     h = [Line2D([], [], color="#444444", marker="o", ls="", ms=3.6, label="CPM"),
-         Line2D([], [], color="#444444", marker="D", ls="", ms=3.4, mfc="white", label="$S_1$")]
+         Line2D([], [], color="#444444", marker="D", ls="", ms=3.4, label="$S_1$")]
     b.legend(handles=h, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2, fontsize=6.5,
              handletextpad=0.1, columnspacing=0.6, borderaxespad=0.1)
     save(fig, path)
@@ -188,7 +190,7 @@ def sparse(path):
             m, fill = SEED_MARK[seed]
             yy = y + (0.17 if j == 0 else -0.17)
             if key in flagged[seed]:
-                a.text(0.15, yy, "= ball-only (did not train)", fontsize=5.9, color="#888888",
+                a.text(0.15, yy, "= ball-only (first checkpoint)", fontsize=5.9, color="#888888",
                        va="center", style="italic")
                 continue
             con = "band_minus_ball" if key == "band" else f"{key}_minus_ball"
@@ -230,11 +232,10 @@ def anatomy(path):
     # (a) how often the band reaches lesion tissue, by reference diameter
     rows = D.reach_by_diameter()
     for i, (lab, n, k) in enumerate(rows):
-        r.bar(i, 100, color="#eeeeee", width=0.62, edgecolor="#cccccc", lw=0.5)
+        r.bar(i, 100, color="none", width=0.62, edgecolor="#bbbbbb", lw=0.6, ls=(0, (2, 1.5)))
         r.bar(i, 100 * k / n, color=C["overlap"], width=0.62)
         r.text(i, 100 * k / n + 3, f"{k}/{n}", ha="center", va="bottom", fontsize=6.8)
-    r.text(0.5, 72, "ball radius 10 mm;\nband starts at 10.3 mm", fontsize=6.0, ha="center", color="#555555",
-           linespacing=1.05)
+
     r.set_xticks(range(len(rows)), [lab.replace("\u2013<", "\u2013") for lab, _, _ in rows])
     r.set_ylim(0, 105)
     r.set_ylabel("Lesions reached (%)")
@@ -286,7 +287,7 @@ def robustness(path):
               ("confirmation_capped", f"Confirmation half ({D.scope_scans('confirmation_capped')})", "#666666", "^", True),
               ("replication_capped", f"Replication half ({D.scope_scans('replication_capped')})", "#666666", "v", False),
               ("pooled_uncapped", "No 100-mark cap", "#9a9a9a", "D", True)]
-    offs = [0.27, 0.09, -0.09, -0.27]
+    offs = [0.30, 0.10, -0.10, -0.30]
     for i, (comp, lab) in enumerate(comps):
         y = len(comps) - 1 - i
         for (scope, _, col, m, fill), dy in zip(styles, offs):
@@ -295,7 +296,7 @@ def robustness(path):
     forest_axis(a, [c[1] for c in comps], ylim_pad=0.5)
     a.set_xlim(-1.5, 9.2)
     a.set_xlabel("Paired CPM difference (points)", labelpad=1.5)
-    panel(a, "a", "Gains hold in both halves and without the 100-mark cap", x=-0.42, y=1.31)
+    panel(a, "a", "Estimates agree across halves and without the cap", x=-0.42, y=1.31)
     h = [Line2D([], [], color=col, marker=m, ls="", ms=3.4, mfc=col if fill else "white", label=lab)
          for _, lab, col, m, fill in styles]
     h = [h[0], h[2], h[1], h[3]]
