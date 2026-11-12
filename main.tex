@@ -17,7 +17,7 @@
 \vspace{-1.6em}
 \begin{center}
   \includegraphics[width=\textwidth]{figures/teaser.pdf}
-  \captionof{figure}{\textbf{What does a wider view add at a fixed candidate?} (a)~Inside a $10\mm$ ball (dashed), a vessel branching point and the edge of an off-centre nodule both look like a compact bright object; only the surrounding field tells them apart. (b)~We keep the crop, the network and the training fixed and change only which original CT voxels are visible (hidden voxels become air). Restoring a thin band around the ball raises CPM from \BallCpm\% to \BandCpm\% and closes \PrimaryRecovery\% of the gap to the full field. Illustration on a synthetic phantom, drawn to scale; CPM values are the primary two-scale 3D ranker on 353 LUNA16 scans.}
+  \captionof{figure}{\textbf{What does a wider view add at a fixed candidate?} (a)~Within a $10\mm$ ball around a candidate (cross), a vessel running obliquely through the slice and the edge of an off-centre nodule both appear as a compact bright object (top). Only the wider view tells them apart (bottom). (b)~We keep the crop, the network and the training fixed and change only which original CT voxels are visible; hidden voxels (hatched) are set to air. Restoring a thin band around the ball raises CPM (mean sensitivity at seven false-positive rates, 353 LUNA16 scans, two-scale 3D ranker) from \BallCpm\% to \BandCpm\%, closing \PrimaryRecovery\% of the gap to the full field. Illustrations use a synthetic phantom drawn to scale.}
   \label{fig:teaser}
 \end{center}
 \vspace{0.6em}
@@ -61,7 +61,7 @@ Permutation-invariant pooling summarizes a set of measurements without an arbitr
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/visibility.pdf}
-  \caption{\textbf{Visibility conditions at one proposal} (cross), drawn to scale on a synthetic phantom with an illustrative native spacing of $0.70\times0.70\times1.25\mm$. (a)~Blue: the native ball $B(p)$. Purple: the sparse readings sample two radii on both arms of each of 96 axes (12 in-plane axes shown); they are read by separate heads, not by the image network. Teal: the native voxels $U(p)$ that support those readings, shown to the image network. Orange: the full band $A(p)$, the envelope of that support (here $10.3$--$15.0\mm$). Grey: the original field. Hidden voxels are air ($-1000\HU$). (b)~Masking native voxels before trilinear resampling guarantees that a hidden voxel can only contribute the value of air.}
+  \caption{\textbf{What each condition shows.} (a)~The four image conditions at one proposal (cross), on a synthetic phantom with an illustrative native spacing of $0.70\times0.70\times1.25\mm$, drawn to scale. Blue: the $10\mm$ ball $B(p)$. Teal: the native voxels $U(p)$ that the 384 sparse samples are interpolated from. Orange: the band $A(p)$, the shell that contains all of $U(p)$. Hatched: hidden voxels, set to air. (b)~Schematic of the sparse samples (not to scale; created in BioRender, labels added): two samples on both ends of each of 96 axes; 12 axes are shown. Their values feed separate readout heads, not the image network. (c)~Masking native voxels before trilinear resampling means a hidden voxel can only contribute the value of air.}
   \label{fig:visibility}
 \end{figure*}
 

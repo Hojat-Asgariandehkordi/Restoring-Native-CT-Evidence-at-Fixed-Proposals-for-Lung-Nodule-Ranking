@@ -59,10 +59,10 @@ C = {
     "band": "#c4511c",      # burnt orange
     "full": "#555555",      # grey
     "sources": "#1b8a7a",   # teal
-    "blind": "#5b8fa8",     # light steel
+    "blind": "#9a9a9a",     # neutral grey
     "spatial": "#7a4fa3",   # purple
-    "compact": "#8a8a8a",
-    "never": "#2f5d8c",
+    "compact": "#3d3d3d",
+    "never": "#4d4d4d",
     "overlap": "#c4511c",
     "null": "#9a9a9a",
 }
