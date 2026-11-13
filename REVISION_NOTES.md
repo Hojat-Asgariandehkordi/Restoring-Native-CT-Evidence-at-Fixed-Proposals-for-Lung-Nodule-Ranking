@@ -75,6 +75,9 @@ Abstract, introduction, related work, method, setup, results, discussion and con
 - Verified against the kit's own compiled example: same page size (US letter), the identical text block on the page (17, 22)–(590, 743) pt, the same review header, and the same font families.
 - **Page limit:** the kit itself states that papers, excluding references, must be no longer than eight pages. The main text currently ends on page 9 (the group chose to go beyond 8 pages); see open items.
 
+## Finalization pass (content-preserving)
+Applied the group's finalization brief limited to figures and minor structure/paragraph changes. Details, the claim→evidence map, the independent rubric review (overall 5.5/10, medium confidence) and the remaining content-level objections are in `FINALIZATION.md`.
+
 ## Open items for the group
 0. **Page limit (decide before submitting):** both the CVPR 2027 guidelines and the official kit set a hard 8-page limit (excluding references). The main text currently ends on page 9. Overlength papers are typically desk-rejected. Moving the 9-page-pass additions back to the supplement brings it to 8 pages.
 1. **Fit-2 attention heads did not train (needs a rerun).** For seed 9143, the direction-blind heads at widths 48 and 96 and the direction-aware head at width 96 selected their first checkpoint (epoch 4), and their CPM equals the frozen ball scorer exactly (0.8283). The v6 text read their contrasts as evidence about geometry and width; for example, the "width-96 gap of +4.21" is just band versus ball. The revision states this openly in Sec. 5.3, the figure, the limitations and supplement Sec. S4. **Suggested experiment:** retrain these three heads (for example with a nonzero-init last layer, a higher learning rate, or selection that excludes epoch 4), or report results from a third seed.

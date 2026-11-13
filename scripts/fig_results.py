@@ -92,21 +92,18 @@ def restoration(path):
                    zorder=3 if k == "band" else 2)
     rate_axis(b)
     b.axvline(1, color="#bbbbbb", lw=0.6, ls=":")
-    b.text(1.06, 65.2, "$S_1$", fontsize=6.6, color="#777777")
+    b.text(1.06, 96.0, "$S_1$", fontsize=6.6, color="#777777", va="top")
     b.set_ylim(64, 98)
     b.set_ylabel("Sensitivity (%)")
     b.grid(axis="y")
     panel(b, "b", "FROC of each model", x=-0.02, y=1.12)
     r1, c1 = D.froc("3691")
-    i0 = int(np.argmin(np.abs(np.array(r1) - 0.30)))
-    for k, lab, dy in (("full", "Full", 3.0), ("band", "Band", -2.6), ("ball", "Ball", -4.2)):
-        t = b.text(0.30, c1[k][i0] + dy, lab, color=C[k], fontsize=6.8, fontweight="bold", ha="center",
-                   va="center", zorder=6)
-        t.set_path_effects([pe.withStroke(linewidth=2.2, foreground="white")])
-    hb = [Line2D([], [], color="#444444", lw=1.0, ls=ls, label=SEED_NAME[s])
-          for s, ls in zip(D.SEEDS, ("-", (0, (3, 1.6))))]
-    b.legend(handles=hb, loc="lower right", fontsize=6.5, handlelength=1.8, labelspacing=0.2,
-             borderaxespad=0.1)
+    hb = [Line2D([], [], color=C[k], lw=1.4, label=l) for k, l in
+          (("full", "Full"), ("band", "Band"), ("ball", "Ball"))]
+    hb += [Line2D([], [], color="#444444", lw=1.0, ls=ls, label=SEED_NAME[s])
+           for s, ls in zip(D.SEEDS, ("-", (0, (3, 1.6))))]
+    b.legend(handles=hb, loc="lower right", ncol=2, fontsize=6.2, handlelength=1.5, labelspacing=0.15,
+             columnspacing=0.6, borderaxespad=0.1)
 
     for j, seed in enumerate(D.SEEDS):
         m, fill = SEED_MARK[seed]
@@ -129,39 +126,24 @@ def restoration(path):
 
 # ----------------------------------------------------------------------------- Fig. 4
 def coverage(path):
-    fig = plt.figure(figsize=(style.COL, 2.25))
-    a = fig.add_axes((0.30, 0.70, 0.66, 0.17))
-    b = fig.add_axes((0.30, 0.13, 0.66, 0.33))
-    q, band = D.native_counts()
-    for y, n, col in ((1, q, C["sources"]), (0, band, C["band"])):
-        a.barh(y, n / 1000, color=col, height=0.62)
-        a.text(n / 1000 + 0.3, y, f"{n:,.0f}", va="center", fontsize=7, color=col)
-    a.set_yticks([1, 0], ["Sources $U(p)$", "Band $A(p)$"])
-    a.text(band / 1000 + 4.6, 0.0, f"{band / q:.1f}$\\times$", fontsize=7.4, fontweight="bold", va="center",
-           color=C["band"])
-    a.set_xlim(0, 25)
-    a.set_xlabel("Native voxels outside the ball, per proposal ($\\times 10^3$)", labelpad=1.5)
-    a.tick_params(axis="y", length=0)
-    a.spines["left"].set_visible(False)
-    a.set_ylim(-0.6, 1.6)
-    panel(a, "a", "Voxels shown outside the ball", x=-0.43, y=1.15)
-
+    """Single panel: paired effects of native sources and band in the same two-scale network.
+    The voxel counts (2,849 vs 16,672) are reported in the text and caption, not plotted."""
+    fig = plt.figure(figsize=(style.COL, 1.22))
+    b = fig.add_axes((0.30, 0.27, 0.68, 0.66))
     rows = [("Sources $-$ ball", "sources_minus_ball", C["sources"]),
             ("Band $-$ ball", "band_minus_ball", C["band"]),
             ("Band $-$ sources", "band_minus_sources", C["band"])]
     for i, (lab, key, col) in enumerate(rows):
         y = len(rows) - 1 - i
-        for dy, field, filled in ((0.14, "cpm", True), (-0.14, "at_1", True)):
+        for dy, field, m in ((0.14, "cpm", "o"), (-0.14, "at_1", "D")):
             e, lo, hi = D.sources(key, field)
-            ci_bar(b, y + dy, e, lo, hi, col, marker="o" if field == "cpm" else "D", filled=filled, ms=3.6,
-                   lw=1.1, cap=0.09)
+            ci_bar(b, y + dy, e, lo, hi, col, marker=m, ms=3.6, lw=1.1, cap=0.09)
     forest_axis(b, [r[0] for r in rows])
     b.set_xlim(-1.5, 7.2)
-    b.set_xlabel("Paired difference (points), same two-scale network", labelpad=1.5)
-    panel(b, "b", "Paired effects in the same network", x=-0.43, y=1.04)
+    b.set_xlabel("Paired difference (points), seed 1", labelpad=1.5)
     h = [Line2D([], [], color="#444444", marker="o", ls="", ms=3.6, label="CPM"),
          Line2D([], [], color="#444444", marker="D", ls="", ms=3.4, label="$S_1$")]
-    b.legend(handles=h, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2, fontsize=6.5,
+    b.legend(handles=h, loc="lower right", bbox_to_anchor=(1.0, 0.98), ncol=2, fontsize=6.5,
              handletextpad=0.1, columnspacing=0.6, borderaxespad=0.1)
     save(fig, path)
 

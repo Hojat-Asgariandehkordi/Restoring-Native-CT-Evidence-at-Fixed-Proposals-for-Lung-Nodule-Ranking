@@ -173,8 +173,9 @@ def ring(ax, r, color, lw=0.9, ls="-", alpha=1):
 
 
 def scalebar(ax, color="white"):
-    ax.plot([-14.6, -9.6], [14.4, 14.4], color=color, lw=1.4, solid_capstyle="butt", zorder=7)
-    ax.text(-12.1, 13.6, "5 mm", color=color, ha="center", va="top", fontsize=6.2, zorder=7)
+    ax.add_patch(Rectangle((-16.2, 10.6), 7.6, 5.6, facecolor="black", edgecolor="none", alpha=0.75, zorder=6))
+    ax.plot([-14.9, -9.9], [14.6, 14.6], color=color, lw=1.4, solid_capstyle="butt", zorder=7)
+    ax.text(-12.4, 13.8, "5 mm", color=color, ha="center", va="top", fontsize=6.2, zorder=7)
 
 
 # ----------------------------------------------------------------------------- Fig. 1
@@ -264,11 +265,11 @@ def visibility(path):
     ball, band = masks()
     u, q = probe_geometry()
     src = source_mask(q)
-    W, H = style.TEXT, 2.95
+    W, H = style.TEXT, 2.62
     fig = plt.figure(figsize=(W, H))
     sz = 1.02
     w, h = sz / W, sz / H
-    y0 = 0.50
+    y0 = 0.465
     xs = [0.008 + i * (w + 0.012) for i in range(4)]
     fig.text(0.008, 0.985, "(a) What the image network sees (axial section, to scale)", fontsize=8.5,
              fontweight="bold", va="top")
@@ -295,7 +296,7 @@ def visibility(path):
             sp.set_linewidth(1.0)
         if i == 0:
             scalebar(ax)
-    kx, ky = xs[0], 0.245
+    kx, ky = xs[0], 0.262
     fig.add_artist(Rectangle((kx, ky), 0.014, 0.035, transform=fig.transFigure, facecolor="black",
                              edgecolor="#444444", hatch="////", lw=0.5))
     fig.text(kx + 0.02, ky + 0.0175, "hidden voxels (set to air)", va="center", fontsize=6.8)
@@ -310,7 +311,7 @@ def visibility(path):
     meta = json.load(open(ROOT / "figures" / "biorender" / "probes_beads.json"))
     bw = 1.30 / W
     bh = 1.30 / H
-    ax = fig.add_axes((xb + 0.005, 0.37, bw, bh))
+    ax = fig.add_axes((xb + 0.005, 0.375, bw, bh))
     ax.imshow(art[..., ::-1] if art.shape[-1] == 3 and art.max() > 1 else art)
     ax.axis("off")
     rb = meta["bead_r"]
@@ -331,14 +332,14 @@ def visibility(path):
         fig.add_artist(plt.Line2D([tx0 + 0.006], [yy], marker=m, ms=5.5, mfc=fc, mec=ec, mew=1.1, ls="",
                                   transform=fig.transFigure))
         fig.text(tx0 + 0.018, yy, txt, fontsize=6.8, va="center", linespacing=1.05)
-    fig.text(xb, 0.33, "12 of 96 axes shown. The 384 sample values go to\nseparate heads, not to the image network.",
+    fig.text(xb, 0.345, "12 of 96 axes shown. The 384 sample values go to\nseparate heads, not to the image network.",
              fontsize=6.6, va="top", color="#444444", linespacing=1.1)
 
     # (c) mask before interpolation, 1D, neutral colours
-    fig.add_artist(plt.Line2D([0.008, 0.992], [0.205, 0.205], color="#cccccc", lw=0.5))
-    fig.text(0.008, 0.19, "(c) Masking before vs. after resampling (1D example)", fontsize=8.5,
+    fig.add_artist(plt.Line2D([0.008, 0.992], [0.225, 0.225], color="#cccccc", lw=0.5))
+    fig.text(0.008, 0.212, "(c) Masking before vs. after resampling (1D example)", fontsize=8.5,
              fontweight="bold", va="top")
-    ax = fig.add_axes((0.0, 0.0, 1.0, 0.15))
+    ax = fig.add_axes((0.0, 0.0, 1.0, 0.17))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
