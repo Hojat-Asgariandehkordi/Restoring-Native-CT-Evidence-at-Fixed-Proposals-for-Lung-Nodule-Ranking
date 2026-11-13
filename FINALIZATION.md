@@ -1,6 +1,6 @@
 # Paper 2 finalization: "Restoring Native CT Evidence at Fixed Proposals for Lung Nodule Ranking"
 
-**Status: expanded working draft** (main text ends on page 9; the CVPR 2027 kit and guidelines set an 8-page limit, see Open items). Built on the official CVPR 2027 author kit.
+**Status: expanded working draft** (main text ends on page 10 after the carried-over comments; the CVPR 2027 kit and guidelines set an 8-page limit, see Open items). Built on the official CVPR 2027 author kit.
 
 **Scope set by the authors:** no change to the scientific content; only figures plus minor structural and paragraph changes, applying the finalization brief where applicable.
 
@@ -28,6 +28,9 @@ Keeping the crop, network and training fixed and varying only the visible native
    - "Distant anatomy" → "surrounding anatomy within the crop", since the full field is only a ±16 mm crop.
 
 Verified: every page rendered and inspected; no undefined references or overfull boxes; figures embed only Times-family fonts; the PDF Title/Author metadata is empty and review mode prints "Anonymous CVPR submission"; there are no identifying links in the PDFs; the BioRender attribution is in the Fig. 2 caption. "Exactly one matching proposal per never-reached lesion" was verified in the aggregate (377 pairs for 377 lesions).
+
+## Carried-over comments (later pass)
+See REVISION_NOTES.md: de-technicalized abstract, toy example, contributions (a)–(d), expanded and self-contained math, all figures one column, results framing, and a rewritten conclusion with shortcomings and future directions.
 
 ## Independent final review (fresh agent, 0–10 internal rubric; approximate)
 Originality/significance 5 · Soundness 7 · Evidence 6 · Clarity 7 · Presentation 8 · **Overall 5.5 (borderline), medium confidence.** It recomputed the reported arithmetic and found no inconsistencies.

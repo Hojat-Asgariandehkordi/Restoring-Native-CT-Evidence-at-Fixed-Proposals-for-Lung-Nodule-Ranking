@@ -180,138 +180,128 @@ def scalebar(ax, color="white"):
 
 # ----------------------------------------------------------------------------- Fig. 1
 def teaser(path):
+    """One-column Fig. 1: (a) the ambiguity (2 x 2), (b) the intervention (1 x 3)."""
     vessel, nodule = vessel_case(), nodule_case()
     ball, band = masks()
-    W, H = style.TEXT, 2.55
+    W, H = style.COL, 4.0
     fig = plt.figure(figsize=(W, H))
-    sz = 0.98                                   # image size (in)
-    w, h = sz / W, sz / H
-    # (a) 2 x 2: rows = ball only / full view, cols = vessel / nodule
-    xa = [0.085, 0.085 + w + 0.008]
-    ya = [0.475, 0.475 - h - 0.035]
-    fig.text(0.005, 0.975, "(a) Inside the ball, a vessel and a nodule edge look alike", fontsize=8.5,
-             fontweight="bold", va="top")
+
+    def box(x_in, y_in, w_in, h_in):
+        return fig.add_axes((x_in / W, y_in / H, w_in / W, h_in / H))
+
+    # (a) rows: ball only / full view; cols: vessel / nodule
+    fig.text(0.02 / W, 1 - 0.03 / H, "(a) A vessel and a nodule edge look alike inside the ball",
+             fontsize=8.0, fontweight="bold", va="top")
+    s_a = 0.95
+    xa = [0.62, 0.62 + s_a + 0.06]
+    ya = [H - 0.30 - s_a, H - 0.30 - 2 * s_a - 0.05]
     for j, (img, t) in enumerate(((vessel, "Vessel"), (nodule, "Off-centre nodule"))):
         for i, vis in enumerate((ball, None)):
-            ax = fig.add_axes((xa[j], ya[i], w, h))
+            ax = box(xa[j], ya[i], s_a, s_a)
             show(ax, img, vis)
-            ring(ax, R_BALL, C["ball"], lw=1.0)
-            cross(ax)
+            ring(ax, R_BALL, C["ball"], lw=0.9)
+            cross(ax, s=1.8, lw=1.0)
             if i == 0:
-                ax.set_title(t, fontsize=7.8, pad=2.5)
+                ax.set_title(t, fontsize=7.4, pad=2)
+            if i == 1:
+                ax.text(0.5, 0.04, ["tube: vessel", "round mass: nodule"][j], transform=ax.transAxes,
+                        ha="center", va="bottom", fontsize=6.0, color="white", fontweight="bold",
+                        bbox=dict(boxstyle="round,pad=0.12", fc="black", ec="none", alpha=0.65))
             if i == 1 and j == 0:
                 scalebar(ax)
-            if i == 1:
-                ax.text(0.5, 0.04, ["tube continues: vessel", "round mass: nodule"][j], transform=ax.transAxes,
-                        ha="center", va="bottom", fontsize=6.4, color="white", fontweight="bold",
-                        bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.65))
-    fig.text(xa[0] - 0.008, ya[0] + h / 2, "10 mm ball\nonly", ha="right", va="center", fontsize=7.4,
-             color=C["ball"], fontweight="bold", linespacing=1.05)
-    fig.text(xa[0] - 0.008, ya[1] + h / 2, "Full\nview", ha="right", va="center", fontsize=7.4,
-             color=C["full"], fontweight="bold", linespacing=1.05)
-    sep = xa[1] + w + 0.022
-    fig.add_artist(plt.Line2D([sep, sep], [0.03, 0.95], color="#bbbbbb", lw=0.6))
+    fig.text((xa[0] - 0.05) / W, (ya[0] + s_a / 2) / H, "Ball\nonly", ha="right", va="center",
+             fontsize=7.0, color=C["ball"], fontweight="bold", linespacing=1.0)
+    fig.text((xa[0] - 0.05) / W, (ya[1] + s_a / 2) / H, "Full\nview", ha="right", va="center",
+             fontsize=7.0, color=C["full"], fontweight="bold", linespacing=1.0)
+    fig.add_artist(plt.Line2D([0.02, 0.98], [1.70 / H, 1.70 / H], color="#bbbbbb", lw=0.5))
 
-    # (b) the intervention
-    xb0 = sep + 0.02
-    fig.text(xb0, 0.975, "(b) Fixed crop, network and training; only the visible native voxels vary",
-             fontsize=8.5, fontweight="bold", va="top")
-    bs = 1.30
-    wb, hb = bs / W, bs / H
-    gap = (0.995 - xb0 - 3 * wb) / 2
-    xb = [xb0 + i * (wb + gap) for i in range(3)]
-    yb = 0.30
+    # (b) intervention on the off-centre nodule
+    fig.text(0.02 / W, 1.665 / H, "(b) Same crop, network and training; only visible voxels vary",
+             fontsize=8.0, fontweight="bold", va="top")
+    s_b = 0.98
+    gap = (W - 0.06 - 3 * s_b) / 2
+    xb = [0.03 + k * (s_b + gap) for k in range(3)]
+    yb = 0.40
     cpm = D.arch_absolute("3691")
     vis = [ball, ball | band, None]
     titles = ["Ball", "Ball + band", "Full field"]
     cols = [C["ball"], C["band"], C["full"]]
     for x, v, t, col, c in zip(xb, vis, titles, cols, cpm):
-        ax = fig.add_axes((x, yb, wb, hb))
+        ax = box(x, yb, s_b, s_b)
         show(ax, nodule, v)
         if v is not None and v is not ball:
             band_fill(ax, alpha=0.22)
-        ring(ax, R_BALL, C["ball"], lw=1.0)
-        cross(ax)
-        ax.set_title(t, fontsize=8, pad=2.5, color=col, fontweight="bold")
-        ax.text(0.5, -0.05, f"CPM {c:.1f}%", transform=ax.transAxes, ha="center", va="top", fontsize=8.6,
+        ring(ax, R_BALL, C["ball"], lw=0.9)
+        cross(ax, s=1.8, lw=1.0)
+        ax.set_title(t, fontsize=7.4, pad=2, color=col, fontweight="bold")
+        ax.text(0.5, -0.04, f"{c:.1f}%", transform=ax.transAxes, ha="center", va="top", fontsize=7.6,
                 color=col, fontweight="bold")
         for sp in ax.spines.values():
             sp.set_color(col)
-            sp.set_linewidth(1.1)
-    # bracket from ball to band
+            sp.set_linewidth(1.0)
     gain = D.restore("3691", "cpm_adjusted")[0]
     rec = 100 * (cpm[1] - cpm[0]) / (cpm[2] - cpm[0])
-    xl, xr = xb[0] + wb / 2, xb[1] + wb / 2
-    yy = 0.085
-    fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yy + 0.035, yy, yy, yy + 0.035], color=C["band"], lw=0.9))
-    fig.text((xl + xr) / 2, yy - 0.012, f"+{gain:.1f} points: {rec:.0f}% of the ball-to-full gap",
-             ha="center", va="top", fontsize=7.4, color=C["band"], fontweight="bold")
-    fig.text(xb[2] + wb / 2, yy - 0.012, "CPM: mean sensitivity at 7 FP rates,\n353 test scans",
-             ha="center", va="top", fontsize=6.6, color="#555555", linespacing=1.05)
-    # hatch key
-    kx = xa[0]
-    ky = 0.005
-    fig.add_artist(Rectangle((kx, ky), 0.016, 0.04, transform=fig.transFigure, facecolor="black",
-                             edgecolor="#444444", hatch="////", lw=0.5))
-    fig.text(kx + 0.022, ky + 0.02, "hidden: set to air before resampling", va="center", fontsize=6.8)
+    xl, xr = (xb[0] + s_b / 2) / W, (xb[1] + s_b / 2) / W
+    yy = 0.15 / H
+    fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yy + 0.06 / H, yy, yy, yy + 0.06 / H], color="#222222", lw=0.8))
+    fig.text((xl + xr) / 2, yy - 0.02 / H, f"+{gain:.1f} CPM points ({rec:.0f}% of the gap)", ha="center",
+             va="top", fontsize=6.9, color="#222222", fontweight="bold")
     save(fig, path)
 
 
 # ----------------------------------------------------------------------------- Fig. 2
 def visibility(path):
+    """One-column Fig. 2: (a) four image conditions (2 x 2), (b) sparse-sample schematic
+    (BioRender art, cleaned), (c) masking before vs. after resampling (1D)."""
     import json
     from matplotlib.image import imread
     img = vessel_case()
     ball, band = masks()
     u, q = probe_geometry()
     src = source_mask(q)
-    W, H = style.TEXT, 2.62
+    W, H = style.COL, 5.55
     fig = plt.figure(figsize=(W, H))
-    sz = 1.02
-    w, h = sz / W, sz / H
-    y0 = 0.465
-    xs = [0.008 + i * (w + 0.012) for i in range(4)]
-    fig.text(0.008, 0.985, "(a) What the image network sees (axial section, to scale)", fontsize=8.5,
+
+    def box(x_in, y_in, w_in, h_in):
+        return fig.add_axes((x_in / W, y_in / H, w_in / W, h_in / H))
+
+    fig.text(0.02 / W, 1 - 0.03 / H, "(a) What the image network sees (to scale)", fontsize=8.0,
              fontweight="bold", va="top")
     titles = ["Ball", "Ball + sources", "Ball + band", "Full field"]
     notes = ["$\\|v-p\\|\\leq 10$ mm", "voxels feeding the\n384 samples, $U(p)$",
-             "whole shell $A(p)$,\n$r = %.1f$\u2013$%.1f$ mm" % BAND, "all voxels"]
+             "shell $A(p)$, $r = %.1f$\u2013$%.1f$ mm" % BAND, "all voxels"]
     cols = [C["ball"], C["sources"], C["band"], C["full"]]
     vis = [ball, ball | src, ball | band, None]
-    for i, (x, t, n, col, v) in enumerate(zip(xs, titles, notes, cols, vis)):
-        ax = fig.add_axes((x, y0, w, h))
+    sz = 1.05
+    xs = [0.45, 0.45 + sz + 0.32]
+    ys = [H - 0.32 - sz, H - 0.32 - 2 * sz - 0.42]
+    for k, (t, n, col, v) in enumerate(zip(titles, notes, cols, vis)):
+        ax = box(xs[k % 2], ys[k // 2], sz, sz)
         show(ax, img, v)
-        if i == 1:
+        if k == 1:
             ring(ax, BAND[0], C["band"], lw=0.6, ls=(0, (2, 1.5)))
             ring(ax, BAND[1], C["band"], lw=0.6, ls=(0, (2, 1.5)))
-        if i == 2:
+        if k == 2:
             band_fill(ax, alpha=0.22)
         ring(ax, R_BALL, C["ball"], lw=0.9)
         cross(ax, s=1.6, lw=0.9)
-        ax.set_title(t, fontsize=8, pad=2.5, color=col, fontweight="bold")
-        ax.text(0.5, -0.04, n, transform=ax.transAxes, ha="center", va="top", fontsize=6.9,
-                linespacing=1.1)
+        ax.set_title(t, fontsize=7.6, pad=2, color=col, fontweight="bold")
+        ax.text(0.5, -0.035, n, transform=ax.transAxes, ha="center", va="top", fontsize=6.6, linespacing=1.05)
         for sp in ax.spines.values():
             sp.set_color(col)
             sp.set_linewidth(1.0)
-        if i == 0:
+        if k == 0:
             scalebar(ax)
-    kx, ky = xs[0], 0.262
-    fig.add_artist(Rectangle((kx, ky), 0.014, 0.035, transform=fig.transFigure, facecolor="black",
-                             edgecolor="#444444", hatch="////", lw=0.5))
-    fig.text(kx + 0.02, ky + 0.0175, "hidden voxels (set to air)", va="center", fontsize=6.8)
-    fig.text(kx + 0.205, ky + 0.0175, "dashed orange: band outline, for reference", va="center",
-             fontsize=6.8, color=C["band"])
 
     # (b) BioRender schematic of the sparse samples
-    xb = xs[-1] + w + 0.035
-    fig.add_artist(plt.Line2D([xb - 0.017, xb - 0.017], [0.27, 0.95], color="#bbbbbb", lw=0.6))
-    fig.text(xb, 0.985, "(b) Sparse samples (schematic)", fontsize=8.5, fontweight="bold", va="top")
+    yb_top = ys[1] - 0.42
+    fig.add_artist(plt.Line2D([0.02, 0.98], [(yb_top + 0.06) / H] * 2, color="#cccccc", lw=0.5))
+    fig.text(0.02 / W, yb_top / H, "(b) The 384 sparse samples (schematic)", fontsize=8.0, fontweight="bold",
+             va="top")
     art = imread(str(ROOT / "figures" / "biorender" / "probes_clean.png"))
     meta = json.load(open(ROOT / "figures" / "biorender" / "probes_beads.json"))
-    bw = 1.30 / W
-    bh = 1.30 / H
-    ax = fig.add_axes((xb + 0.005, 0.375, bw, bh))
+    bs = 1.18
+    ax = box(0.25, yb_top - 0.17 - bs, bs, bs)
     ax.imshow(art[..., ::-1] if art.shape[-1] == 3 and art.max() > 1 else art)
     ax.axis("off")
     rb = meta["bead_r"]
@@ -323,46 +313,44 @@ def visibility(path):
                                    edgecolor="none", zorder=2))
     ax.set_xlim(0, meta["size"][0])
     ax.set_ylim(meta["size"][1], 0)
-    tx0 = xb + bw + 0.012
-    lines = [("o", C["spatial"], C["spatial"], "sample at $r_N$"), ("o", "white", C["spatial"], "sample at $r_F$"),
-             ("s", C["sources"], C["sources"], "voxels it reads\n(native sources)"),
-             ("o", C["ball"], C["ball"], "10 mm ball"), ("o", "#f6d9c6", "#e8b08a", "band: envelope\nof all sources")]
-    for k, (m, fc, ec, txt) in enumerate(lines):
-        yy = 0.83 - k * 0.105
-        fig.add_artist(plt.Line2D([tx0 + 0.006], [yy], marker=m, ms=5.5, mfc=fc, mec=ec, mew=1.1, ls="",
+    lx = 0.25 + bs + 0.18
+    items = [("o", C["spatial"], C["spatial"], "sample at $r_N$"), ("o", "white", C["spatial"], "sample at $r_F$"),
+             ("s", C["sources"], C["sources"], "voxels it reads"), ("o", C["ball"], C["ball"], "10 mm ball"),
+             ("o", "#f6d9c6", "#e8b08a", "band: envelope of\nall sources")]
+    for k, (m, fc, ec, txt) in enumerate(items):
+        yy = (yb_top - 0.30 - k * 0.205) / H
+        fig.add_artist(plt.Line2D([(lx) / W], [yy], marker=m, ms=5, mfc=fc, mec=ec, mew=1.0, ls="",
                                   transform=fig.transFigure))
-        fig.text(tx0 + 0.018, yy, txt, fontsize=6.8, va="center", linespacing=1.05)
-    fig.text(xb, 0.345, "12 of 96 axes shown. The 384 sample values go to\nseparate heads, not to the image network.",
-             fontsize=6.6, va="top", color="#444444", linespacing=1.1)
+        fig.text((lx + 0.1) / W, yy, txt, fontsize=6.6, va="center", linespacing=1.0)
 
-    # (c) mask before interpolation, 1D, neutral colours
-    fig.add_artist(plt.Line2D([0.008, 0.992], [0.225, 0.225], color="#cccccc", lw=0.5))
-    fig.text(0.008, 0.212, "(c) Masking before vs. after resampling (1D example)", fontsize=8.5,
+    # (c) masking before vs after resampling, 1D
+    yc_top = yb_top - 0.17 - bs - 0.12
+    fig.add_artist(plt.Line2D([0.02, 0.98], [(yc_top + 0.06) / H] * 2, color="#cccccc", lw=0.5))
+    fig.text(0.02 / W, yc_top / H, "(c) Masking before vs. after resampling (1D)", fontsize=8.0,
              fontweight="bold", va="top")
-    ax = fig.add_axes((0.0, 0.0, 1.0, 0.17))
+    ax = box(0.0, 0.0, W, yc_top - 0.2)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
     bad, good = "#b2182b", "#1a1a1a"
     for row, (yy, hidden_val, res, txt, col, mark) in enumerate((
-            (0.70, "+100 HU", "$-275$ HU", "Resample, then mask: the hidden value leaks into the sample", bad, r"$\times$"),
-            (0.22, "air", "$-687.5$ HU", "Mask, then resample (ours): the same for any hidden value", good, r"$\checkmark$"))):
-        xin, xout = 0.03, 0.27
+            (0.70, "+100 HU", "$-275$ HU", "resample, then mask: leaks", bad, r"$\times$"),
+            (0.22, "air", "$-687.5$ HU", "mask, then resample: air only", good, r"$\checkmark$"))):
+        xin, xout = 0.06, 0.40
         xq = xin + 0.375 * (xout - xin)
-        ax.hlines(yy, 0.015, 0.285, color="#999999", lw=0.7)
-        ax.vlines(0.165, yy - 0.2, yy + 0.2, color="#999999", lw=0.6, ls=":")
-        ax.scatter([xin], [yy], marker="s", s=30, color="#888888", zorder=3)
-        ax.scatter([xout], [yy], marker="s", s=30, facecolor="black" if row else "#d9d9d9",
+        ax.hlines(yy, 0.03, 0.43, color="#999999", lw=0.7)
+        ax.vlines(0.23, yy - 0.16, yy + 0.16, color="#999999", lw=0.6, ls=":")
+        ax.scatter([xin], [yy], marker="s", s=24, color="#888888", zorder=3)
+        ax.scatter([xout], [yy], marker="s", s=24, facecolor="black" if row else "#d9d9d9",
                    edgecolor="#444444", hatch="////" if row else None, lw=0.6, zorder=3)
-        ax.scatter([xq], [yy], marker="D", s=16, facecolor="white", edgecolor=col, lw=0.9, zorder=3)
+        ax.scatter([xq], [yy], marker="D", s=14, facecolor="white", edgecolor=col, lw=0.9, zorder=3)
+        ax.text(xin, yy + 0.12, "$-500$ HU", ha="center", fontsize=6.2)
+        ax.text(xout, yy + 0.12, f"hidden: {hidden_val}", ha="center", fontsize=6.2)
         if row == 0:
-            ax.text(xq, yy + 0.13, "sample", ha="center", fontsize=6.5)
-            ax.text(0.168, yy + 0.13, "ball edge", ha="left", fontsize=6.0, color="#777777")
-        ax.text(xin, yy + 0.13, "visible $-500$ HU", ha="center", fontsize=6.5)
-        ax.text(xout, yy + 0.13, f"hidden: {hidden_val}", ha="center", fontsize=6.5)
-        ax.text(0.31, yy, f"{mark}", color=col, fontsize=9, va="center", fontweight="bold")
-        ax.text(0.335, yy, f"sample = {res}.", color=col, fontsize=7.4, va="center", fontweight="bold")
-        ax.text(0.505, yy, txt, fontsize=7.4, va="center", color=col)
+            ax.text(xq, yy - 0.2, "sample", ha="center", fontsize=6.0)
+        ax.text(0.49, yy, mark, color=col, fontsize=8, va="center", fontweight="bold")
+        ax.text(0.54, yy + 0.07, f"sample = {res}", color=col, fontsize=6.9, va="bottom", fontweight="bold")
+        ax.text(0.54, yy + 0.05, txt.replace(":\n", ": "), fontsize=6.4, va="top", color=col)
     save(fig, path)
 
 

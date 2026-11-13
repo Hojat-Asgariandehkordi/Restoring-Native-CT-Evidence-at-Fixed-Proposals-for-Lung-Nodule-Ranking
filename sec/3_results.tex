@@ -1,12 +1,14 @@
 \section{Results}
 \label{sec:results}
 
-\begin{figure*}[t]
+Our experiments follow the logic of the introduction. We first establish how much of the context gain the band recovers and whether this finding is robust (Sec.~\ref{sec:dense_result}). We then test two explanations that would make the band unnecessary: that the same voxels would suffice if they entered the image network as sparse samples (Sec.~\ref{sec:source_result}), and that sparse samples would suffice if their geometry were read appropriately (Sec.~\ref{sec:spatial_result}). Finally, we ask which lesions benefit, which distinguishes lesion evidence from surrounding anatomy (Sec.~\ref{sec:anatomy_result}), and whether the effect carries over to other architectures (Sec.~\ref{sec:breadth_result}).
+
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/restoration.pdf}
+  \includegraphics[width=\columnwidth]{figures/restoration.pdf}
   \caption{\textbf{Restoring the band improves ranking at fixed proposals.} (a)~Paired band-minus-ball effects on CPM and on $S_1$ for every architecture, with 95\% intervals from 2,000 patient-level bootstrap resamples of the 353 evaluation scans. $^\dagger$Adjusted for three comparisons. (b)~FROC curves of the two-scale ranker for both seeds (solid: seed~1, dashed: seed~2), each model evaluated at its own thresholds; the dotted line marks 1~FP/scan ($S_1$). (c)~Band-minus-ball sensitivity at each of the seven operating points that make up CPM; seed~1 filled, seed~2 open. The point estimate is positive at all seven rates for both seeds; at the three lowest rates, the seed-1 intervals reach zero.}
   \label{fig:restoration}
-\end{figure*}
+\end{figure}
 
 \subsection{Effect of restoring the band}
 \label{sec:dense_result}
@@ -20,7 +22,7 @@ With only the native ball visible, the two-scale ranker reaches \BallCpm\% CPM; 
   \label{fig:robustness}
 \end{figure}
 
-These effects are stable across the two halves of the evaluation pool and unaffected by the 100-mark cap (Fig.~\ref{fig:robustness}a): the band-minus-ball gain lies between $+3.1$ and $+6.2$ points in every half, with intervals above zero for both seeds, and remains at $+4.03$ and $+4.21$ points without the cap. When thresholds are instead fixed in advance on the calibration set, sensitivity increases by $+3.69$ and $+2.39$ points, while the false-positive rate changes by less than $0.25$ per scan (Fig.~\ref{fig:robustness}b). Since the false-positive rate still differs slightly between models in this setting, we regard the matched comparisons as the primary evidence of improved ranking.
+These effects are stable across the two halves of the evaluation pool and unaffected by the 100-mark cap (Fig.~\ref{fig:robustness}a): the band-minus-ball gain lies between $+3.1$ and $+6.2$ points in every half, with intervals above zero for both seeds, and remains at $+4.03$ and $+4.21$ points without the cap. When thresholds are instead fixed in advance on the calibration set, sensitivity increases by $+3.69$ and $+2.39$ points, while the false-positive rate changes by less than $0.25$ per scan (Fig.~\ref{fig:robustness}b). Since the false-positive rate still differs slightly between models in this setting, we regard the matched comparisons as the primary evidence of improved ranking. Taken together, these results show that a thin shell of native CT, chosen only by the geometry of interpolation, carries most of the information that the full $32.4\mm$ field adds at fixed proposals.
 
 \input{tables/visibility_main}
 
@@ -34,7 +36,7 @@ These effects are stable across the two halves of the evaluation pool and unaffe
   \label{fig:coverage}
 \end{figure}
 
-A sparse head might underperform simply because its evidence arrives after the image features have been computed. The native-source condition removes this confound by providing the image network with every native voxel behind the 384 samples from the first convolution onwards. It nevertheless raises CPM over the ball by only \SourcesGain{} points, whereas the band adds a further \CoverageGap{} points over the native sources (Fig.~\ref{fig:coverage}). At 1~FP/scan, the corresponding effects ($+2.60$ and $+1.52$ points) have intervals that include zero, so the evidence is clearer for CPM than for any single operating point. Compared with the native sources, the band exposes about six times as many exterior voxels (\BandSources{} versus \QuerySources{} per proposal) and forms a contiguous shell along which convolutional filters can follow structures. Since our intervention changes both properties together, it does not determine their relative contributions.
+A sparse head might underperform simply because its evidence arrives after the image features have been computed. The native-source condition removes this confound by providing the image network with every native voxel behind the 384 samples from the first convolution onwards. It nevertheless raises CPM over the ball by only \SourcesGain{} points, whereas the band adds a further \CoverageGap{} points over the native sources (Fig.~\ref{fig:coverage}). At 1~FP/scan, the corresponding effects ($+2.60$ and $+1.52$ points) have intervals that include zero, so the evidence is clearer for CPM than for any single operating point. Compared with the native sources, the band exposes about six times as many exterior voxels (\BandSources{} versus \QuerySources{} per proposal) and forms a contiguous shell along which convolutional filters can follow structures. Since our intervention changes both properties together, it does not determine their relative contributions. What it does establish is that the advantage of the band is not an artefact of where its evidence enters the network.
 
 \subsection{Sparse readouts and sample geometry}
 \label{sec:spatial_result}
@@ -50,17 +52,17 @@ A sparse head might underperform simply because its evidence arrives after the i
 
 If the sparse samples underperformed only because pooling discards their relative directions, direction-aware attention should narrow the gap. For seed~1, all sparse heads improve on the ball-only ranker by 0.8--1.5 CPM points, but the difference between direction-aware and direction-blind attention is \GeometrySmallPrimary{} points at width 48 and \GeometryLargePrimary{} points at width 96 (Fig.~\ref{fig:sparse}a), and doubling the width brings no improvement. The best sparse readout reaches 85.06\% CPM, compared with 87.60\% for the band (Tab.~\ref{tab:sparse}); the band exceeds the compact refit by \CompactGapPrimary{} points and the direction-aware width-48 head by \ResidualSmallPrimary{} CPM points and \ResidualSmallOnePrimary{} points of $S_1$.
 
-For seed~2, three of the four attention heads (direction-blind at both widths and direction-aware at width 96) retained their first checkpoint, whose output is identical to that of the ball-only ranker. Comparisons involving these heads are therefore comparisons with the ball-only ranker and carry no information about geometry. The remaining seed-2 heads change CPM by $-0.2$ to $+0.1$ points, and the band exceeds all of them by more than four points. The compact-head controls in Fig.~\ref{fig:sparse}b are discussed in Sec.~\ref{sec:compact_result}.
+For seed~2, three of the four attention heads (direction-blind at both widths and direction-aware at width 96) retained their first checkpoint, whose output is identical to that of the ball-only ranker. Comparisons involving these heads are therefore comparisons with the ball-only ranker and carry no information about geometry. The remaining seed-2 heads change CPM by $-0.2$ to $+0.1$ points, and the band exceeds all of them by more than four points. Reading the samples more cleverly thus does not substitute for seeing the region they are drawn from. The compact-head controls in Fig.~\ref{fig:sparse}b are discussed in Sec.~\ref{sec:compact_result}.
 
 \subsection{Where the gains occur}
 \label{sec:anatomy_result}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/anatomy.pdf}
+  \includegraphics[width=\columnwidth]{figures/anatomy.pdf}
   \caption{\textbf{The band helps most where it reaches the lesion.} (a)~Share of linked lesions with a matching proposal whose majority-reader contour the band reaches at some matching proposal, by reference diameter (the ball radius is $10\mm$ and the band starts at $10.3\mm$). (b,c)~Band-minus-ball sensitivity on the global FP axis for lesions the band reaches (orange, $n=72$) and never reaches (grey, $n=377$); the dotted line marks 1~FP/scan. Groups were defined before any detection scores were computed. 95\% intervals from 2,000 patient-level bootstrap resamples.}
   \label{fig:anatomy}
-\end{figure*}
+\end{figure}
 
 \input{tables/anatomy_main}
 

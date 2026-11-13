@@ -36,17 +36,7 @@ Institution1 address\\
 }
 
 \begin{document}
-\twocolumn[{%
-\renewcommand\twocolumn[1][]{#1}%
 \maketitle
-\vspace{-1.6em}
-\begin{center}
-  \includegraphics[width=\textwidth]{figures/teaser.pdf}
-  \captionof{figure}{\textbf{Visibility intervention at fixed proposals.} (a)~Within a $10\mm$ ball around a proposal (cross), a vessel crossing the slice obliquely and the edge of an off-centre nodule both appear as a compact bright object (top). Only the wider view tells them apart (bottom): the vessel returns into the slice as a tube, while the nodule is one round mass. (b)~We keep the crop, the network and the training fixed and change only which original CT voxels are visible; hidden voxels (hatched) are set to air. Restoring a thin band around the ball raises CPM (mean sensitivity at seven false-positive rates, 353 LUNA16 scans, two-scale 3D ranker) from \BallCpm\% to \BandCpm\%, closing \PrimaryRecovery\% of the gap to the full field. Illustrations use a synthetic phantom drawn to scale.}
-  \label{fig:teaser}
-\end{center}
-\vspace{0.6em}
-}]
 
 \input{sec/0_abstract}
 \input{sec/1_intro}

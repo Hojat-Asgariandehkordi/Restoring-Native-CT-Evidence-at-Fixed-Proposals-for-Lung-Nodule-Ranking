@@ -21,10 +21,10 @@ import data as D
 OUT = D.ROOT / "figures"
 
 
-def rate_axis(ax, label=True):
+def rate_axis(ax, label=True, sparse=False):
     ax.set_xscale("log", base=2)
     ax.xaxis.set_major_locator(FixedLocator(D.RATES))
-    ax.set_xticklabels(D.RATE_LABELS)
+    ax.set_xticklabels(["1/8", "", "1/2", "", "2", "", "8"] if sparse else D.RATE_LABELS)
     ax.xaxis.set_minor_locator(NullLocator())
     ax.set_xlim(0.105, 9.5)
     if label:
@@ -51,18 +51,11 @@ def seed_handles(color="#444444", extra=()):
 
 # ----------------------------------------------------------------------------- Fig. 3
 def restoration(path):
-    fig = plt.figure(figsize=(style.TEXT, 2.05))
-    gs = fig.add_gridspec(1, 4, width_ratios=[0.78, 0.78, 1.15, 1.15], wspace=0.16,
-                          left=0.115, right=0.995, bottom=0.30, top=0.86)
-    a1, a2 = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
-    b = fig.add_subplot(gs[2])
-    c = fig.add_subplot(gs[3])
-    gs.update(wspace=0.16)
-    # shift b, c to make room for b's y label
-    for ax, dx in ((b, 0.055), (c, 0.085)):
-        p = ax.get_position()
-        ax.set_position((p.x0 + dx, p.y0, p.width - 0.03, p.height))
-
+    fig = plt.figure(figsize=(style.COL, 3.75))
+    a1 = fig.add_axes((0.355, 0.635, 0.29, 0.30))
+    a2 = fig.add_axes((0.69, 0.635, 0.29, 0.30))
+    b = fig.add_axes((0.13, 0.11, 0.36, 0.33))
+    c = fig.add_axes((0.625, 0.11, 0.36, 0.33))
     rows = [("Two-scale 3D, seed 1", lambda f: D.restore("3691", "cpm_adjusted" if f == "cpm" else f)),
             ("Two-scale 3D, seed 2", lambda f: D.restore("9143", f)),
             ("Single-stream 3D", lambda f: D.single_stream(f)),
@@ -75,13 +68,13 @@ def restoration(path):
             ax.text(hi + 0.25, len(rows) - 1 - i, f"{e:+.1f}{dag}", ha="left", va="center", fontsize=6.6,
                     color=C["band"])
         forest_axis(ax, [r[0] for r in rows])
-        ax.set_xlim(-3.2, 9.6)
-        ax.set_xticks([-2, 0, 2, 4, 6, 8])
+        ax.set_xlim(-3.2, 10.5)
+        ax.set_xticks([0, 4, 8])
         ax.set_title(title, fontsize=7.8, pad=2, fontweight="normal")
         ax.set_xlabel("Band $-$ ball (points)")
     a2.set_yticklabels([])
-    panel(a1, "a", "Band $-$ ball, every architecture", x=-0.02, y=1.12)
-    a2.text(1.0, -0.43, "$\\dagger$adjusted CI", transform=a2.transAxes, ha="right",
+    panel(a1, "a", "Band $-$ ball, every architecture", x=-1.15, y=1.13)
+    a2.text(1.0, -0.47, "$\\dagger$adjusted CI", transform=a2.transAxes, ha="right",
             fontsize=6.3, color="#555555")
 
     rates, _ = D.froc("3691")
@@ -90,20 +83,19 @@ def restoration(path):
         for k in ("ball", "full", "band"):
             b.plot(r, curves[k], color=C[k], lw=1.25 if k == "band" else 1.0, ls=ls,
                    zorder=3 if k == "band" else 2)
-    rate_axis(b)
+    rate_axis(b, sparse=True)
+    b.set_xlabel("FP per scan")
     b.axvline(1, color="#bbbbbb", lw=0.6, ls=":")
     b.text(1.06, 96.0, "$S_1$", fontsize=6.6, color="#777777", va="top")
     b.set_ylim(64, 98)
     b.set_ylabel("Sensitivity (%)")
     b.grid(axis="y")
-    panel(b, "b", "FROC of each model", x=-0.02, y=1.12)
+    panel(b, "b", "FROC of each model", x=-0.30, y=1.06)
     r1, c1 = D.froc("3691")
     hb = [Line2D([], [], color=C[k], lw=1.4, label=l) for k, l in
           (("full", "Full"), ("band", "Band"), ("ball", "Ball"))]
-    hb += [Line2D([], [], color="#444444", lw=1.0, ls=ls, label=SEED_NAME[s])
-           for s, ls in zip(D.SEEDS, ("-", (0, (3, 1.6))))]
-    b.legend(handles=hb, loc="lower right", ncol=2, fontsize=6.2, handlelength=1.5, labelspacing=0.15,
-             columnspacing=0.6, borderaxespad=0.1)
+    b.legend(handles=hb, loc="lower right", ncol=1, fontsize=6.2, handlelength=1.3, labelspacing=0.15,
+             borderaxespad=0.15)
 
     for j, seed in enumerate(D.SEEDS):
         m, fill = SEED_MARK[seed]
@@ -113,14 +105,15 @@ def restoration(path):
             c.hlines([lo, hi], x / 1.045, x * 1.045, color=C["band"], lw=0.9)
             c.plot(x, e, marker=m, ms=3.6, mec=C["band"], mfc=C["band"] if fill else "white", mew=0.9,
                    zorder=3)
-    rate_axis(c)
+    rate_axis(c, sparse=True)
+    c.set_xlabel("FP per scan")
     c.axhline(0, color="#444444", lw=0.8, zorder=1)
-    c.set_ylabel("Band $-$ ball sensitivity (points)")
+    c.set_ylabel("Band $-$ ball (points)")
     c.set_ylim(-1.5, 13.5)
     c.grid(axis="y")
-    panel(c, "c", "Gain per operating point", x=-0.02, y=1.12)
-    c.legend(handles=seed_handles(C["band"]), loc="upper right", ncol=2, fontsize=6.5,
-             handletextpad=0.2, columnspacing=0.8, borderaxespad=0.1)
+    panel(c, "c", "Gain per operating point", x=-0.30, y=1.06)
+    c.legend(handles=seed_handles(C["band"]), loc="upper right", ncol=1, fontsize=6.2,
+             handletextpad=0.2, borderaxespad=0.1, labelspacing=0.2)
     save(fig, path)
 
 
@@ -208,9 +201,9 @@ def sparse(path):
 
 # ----------------------------------------------------------------------------- Fig. 8
 def anatomy(path):
-    fig = plt.figure(figsize=(style.TEXT, 2.1))
-    r = fig.add_axes((0.06, 0.27, 0.20, 0.52))
-    axes = [fig.add_axes((0.375, 0.27, 0.295, 0.52)), fig.add_axes((0.695, 0.27, 0.295, 0.52))]
+    fig = plt.figure(figsize=(style.COL, 3.35))
+    r = fig.add_axes((0.20, 0.62, 0.36, 0.30))
+    axes = [fig.add_axes((0.13, 0.11, 0.405, 0.33)), fig.add_axes((0.575, 0.11, 0.405, 0.33))]
     # (a) how often the band reaches lesion tissue, by reference diameter
     rows = D.reach_by_diameter()
     for i, (lab, n, k) in enumerate(rows):
@@ -224,7 +217,7 @@ def anatomy(path):
     r.set_xlabel("Reference diameter")
     r.grid(axis="y")
     r.set_axisbelow(True)
-    panel(r, "a", "Which lesions the band reaches", x=-0.25, y=1.05)
+    panel(r, "a", "Which lesions the band reaches", x=-0.45, y=1.07)
     groups = (("never_overlap", C["never"], "o"), ("any_overlap", C["overlap"], "s"))
     for ax, seed, letter in zip(axes, D.SEEDS, "bc"):
         for k, (g, col, m) in enumerate(groups):
@@ -233,20 +226,21 @@ def anatomy(path):
                 ax.vlines(x, lo, hi, color=col, lw=0.95)
                 ax.hlines([lo, hi], x / 1.05, x * 1.05, color=col, lw=0.85)
             ax.plot(xs, [q[0] for q in D.anatomy(seed, g)], marker=m, ms=3.2, color=col, lw=0.9)
-        rate_axis(ax)
+        rate_axis(ax, sparse=True)
+        ax.set_xlabel("FP per scan")
         zero_line(ax, vertical=False)
         ax.axvline(1, color="#bbbbbb", lw=0.6, ls=":")
         ax.grid(axis="y")
         ax.set_ylim(-8, 43)
         ax.text(1.06, -6.5, "$S_1$", fontsize=6.4, color="#777777")
-        panel(ax, letter, f"Gain by group, {SEED_NAME[seed].lower()}", x=0.0, y=1.05)
-    axes[0].set_ylabel("Band $-$ ball sensitivity (points)")
+        panel(ax, letter, f"Gain by group, {SEED_NAME[seed].lower()}", x=-0.02 if letter == "c" else -0.22, y=1.05)
+    axes[0].set_ylabel("Band $-$ ball (points)")
     axes[1].set_yticklabels([])
     h = [Line2D([], [], color=col, marker=m, ms=3.4, lw=0.9,
                 label=f"{'Band reaches lesion' if g == 'any_overlap' else 'Band never reaches lesion'} "
                       f"($n={D.anatomy_n(g)}$)") for g, col, m in groups]
-    fig.legend(handles=h, loc="upper center", bbox_to_anchor=(0.68, 0.985), ncol=2, fontsize=6.6,
-               handlelength=1.6, columnspacing=1.2)
+    fig.legend(handles=h, loc="center left", bbox_to_anchor=(0.60, 0.77), ncol=1, fontsize=6.4,
+               handlelength=1.6, labelspacing=0.5, frameon=False)
     save(fig, path)
 
 
