@@ -52,8 +52,8 @@ G = [("any_overlap", "Reaches lesion"), ("never_overlap", "Never reaches"),
 L = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{3.5pt}",
      r"\caption{Sensitivity (\%) at a global 1 FP/scan by anatomy group, for the ball and band rankers. "
      r"Of the 461 reference lesions, 455 have usable contours and all remain in the global FROC. Diam.: median reference "
-     r"diameter (mm). Between-group difference in the band$-$ball gain: $+13.16\\,[3.68,\\,22.85]$ (seed~1) and "
-     r"$+15.61\\,[4.69,\\,24.92]$ (seed~2).}",
+     r"diameter (mm). Between-group difference in the band$-$ball gain: $+13.16\,[3.68,\,22.85]$ (seed~1) and "
+     r"$+15.61\,[4.69,\,24.92]$ (seed~2).}",
      r"\label{tab:anatomy}", r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
      r" & & & \multicolumn{2}{c}{Seed 1} & \multicolumn{2}{c}{Seed 2} \\",
      r"\cmidrule(lr){4-5}\cmidrule(l){6-7}",

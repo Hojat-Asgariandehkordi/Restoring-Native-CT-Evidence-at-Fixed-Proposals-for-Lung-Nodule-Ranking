@@ -12,7 +12,7 @@ The anonymous PDFs are `build/main.pdf` and `build/supplement.pdf`. The main pap
 
 ## Regenerate tables and figures
 
-One command rebuilds all tables, all figures and both PDFs: `./scripts/make_all.sh`. The revised Times-font figures are drawn by `scripts/` (see `REVISION_NOTES.md`); the original renderer below still produces the tables.
+One command rebuilds all tables, all figures and both PDFs: `sh scripts/make_all.sh`. The LaTeX follows the official CVPR 2027 author kit (`cvpr.sty`, `ieeenat_fullname.bst`, `preamble.tex`, `main.tex` skeleton); sections live in `sec/` and the bibliography in `main.bib`. The revised Times-font figures are drawn by `scripts/` (see `REVISION_NOTES.md`); the original renderer below still produces the tables.
 
 ### Original renderer
 

@@ -66,9 +66,19 @@ Abstract, introduction, related work, method, setup, results, discussion and con
 - Checked by a fresh style-reviewer agent acting as a CVPR area chair. Related work and conclusion: "reads like CVPR". Abstract, intro, method, setup and discussion: minor polish, applied. Results §5.4–5.6: rewritten as above.
 - The supplement is still mostly the authors' original text; only the sentence about the seed-2 heads was harmonized.
 
+## Official CVPR 2027 author kit (`author-kit-CVPR2027-v1-latex.zip`)
+- `cvpr.sty` and `ieeenat_fullname.bst` were already **byte-identical** to the kit.
+- `main.tex` and `supplement.tex` were rebuilt on the kit's `main.tex` skeleton: `\usepackage[review]{cvpr}`, `\input{preamble}` *before* hyperref, and the kit's hyperref line (`pagebackref,breaklinks,colorlinks,allcolors=cvprblue`). The **`\paperID` definition was removed**, as in the 2027 kit, to avoid leaking IDs. The author block is in the kit's form; in review mode `cvpr.sty` prints "Anonymous CVPR submission" automatically (TODO for camera-ready).
+- `preamble.tex` is the kit's file, with our packages appended (microtype enabled as the kit suggests, booktabs, amsmath, algorithm, capt-of, float, unit macros). The custom `shared.tex` was removed. `cleveref` is loaded by `cvpr.sty`.
+- Layout follows the kit: sections in `sec/` (`0_abstract`, `1_intro`, `2_method`, `3_results`, `4_discussion`); the bibliography is `main.bib`.
+- The supplement now opens with the kit's `\maketitlesupplementary` and is still compiled separately.
+- Verified against the kit's own compiled example: same page size (US letter), the identical text block on the page (17, 22)–(590, 743) pt, the same review header, and the same font families.
+- **Page limit:** the kit itself states that papers, excluding references, must be no longer than eight pages. The main text currently ends on page 9 (the group chose to go beyond 8 pages); see open items.
+
 ## Open items for the group
+0. **Page limit (decide before submitting):** both the CVPR 2027 guidelines and the official kit set a hard 8-page limit (excluding references). The main text currently ends on page 9. Overlength papers are typically desk-rejected. Moving the 9-page-pass additions back to the supplement brings it to 8 pages.
 1. **Fit-2 attention heads did not train (needs a rerun).** For seed 9143, the direction-blind heads at widths 48 and 96 and the direction-aware head at width 96 selected their first checkpoint (epoch 4), and their CPM equals the frozen ball scorer exactly (0.8283). The v6 text read their contrasts as evidence about geometry and width; for example, the "width-96 gap of +4.21" is just band versus ball. The revision states this openly in Sec. 5.3, the figure, the limitations and supplement Sec. S4. **Suggested experiment:** retrain these three heads (for example with a nonzero-init last layer, a higher learning rate, or selection that excludes epoch 4), or report results from a third seed.
-2. **Verify the 14 new references** at the end of `references.bib`.
+2. **Verify the 14 new references** at the end of `main.bib`.
 3. **LLM statement:** a sentence about this revision (Claude) was added. Check the whole statement, including "study design", against the CVPR 2027 policy.
 4. **Repo visibility:** this GitHub repo is public under a named account and has the paper's exact title, which can break double-blind review. Consider making it private until decisions come out.
 5. **Optional new experiments that would strengthen the paper:**

@@ -1,14 +1,39 @@
+% CVPR 2027 Paper Template; see https://github.com/cvpr-org/author-kit
+
 \documentclass[10pt,twocolumn,letterpaper]{article}
-\usepackage[review]{cvpr}
-\input{shared}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{capt-of}
-\def\paperID{}
+
+%%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
+% \usepackage{cvpr}              % To produce the CAMERA-READY version
+\usepackage[review]{cvpr}      % To produce the REVIEW version
+% \usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
+
+% Import additional packages in the preamble file, before hyperref
+\input{preamble}
+
+% It is strongly recommended to use hyperref, especially for the review version.
+% hyperref with option pagebackref eases the reviewers' job.
+% Please disable hyperref *only* if you encounter grave issues, 
+% e.g. with the file validation for the camera-ready version.
+%
+% If you comment hyperref and then uncomment it, you should delete *.aux before re-running LaTeX.
+% (Or just hit 'q' on the first LaTeX run, let it finish, and you should be clear).
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
 \def\confName{CVPR}
 \def\confYear{2027}
+
+%%%%%%%%% TITLE - PLEASE UPDATE
 \title{Restoring Native CT Evidence at Fixed Proposals for Lung Nodule Ranking}
-\author{Anonymous CVPR submission}
+
+%%%%%%%%% AUTHORS - PLEASE UPDATE
+% Hidden automatically in review mode ("Anonymous CVPR submission" is printed instead).
+% TODO (camera-ready): replace with the author list and affiliations.
+\author{First Author\\
+Institution1\\
+Institution1 address\\
+{\tt\small firstauthor@i1.org}
+}
 
 \begin{document}
 \twocolumn[{%
@@ -23,54 +48,22 @@
 \vspace{0.6em}
 }]
 
-\begin{abstract}
-\input{abstract}
-\end{abstract}
-
-\section{Introduction}
-\label{sec:intro}
-
-Pulmonary nodule detection in chest CT is commonly organized in two stages: a candidate generator proposes locations with high sensitivity, and a false-positive reduction network ranks the candidates so that true nodules precede false marks~\cite{setio2017luna16,setio2016multiview,dou2017multilevel}. Rankers that observe a wider field around each proposal perform better~\cite{dou2017multilevel,kim2018mgi}, yet the source of this improvement has received little attention. A wider field may reveal surrounding anatomy, for instance a vessel that continues beyond a bright cross-section, or it may simply reveal more of the lesion when the proposal is displaced from the nodule centre or the nodule exceeds the local view (Fig.~\ref{fig:teaser}a). Comparing patch sizes cannot distinguish these explanations, because a larger patch changes both at once.
-
-In this work, we separate them with a controlled \emph{visibility intervention}. The proposal locations, the input tensor, the network and the training recipe are held fixed, and only the set of voxels of the original (\emph{native}) scan that the ranker may observe is varied: a $10\mm$ ball around the proposal, the ball together with a thin spherical band just outside it, or the full field. Hidden voxels are set to air \emph{before} resampling, which guarantees that no hidden intensity reaches the input through interpolation (Fig.~\ref{fig:visibility}c), and every model is trained under the visibility with which it is evaluated.
-
-On the \EvalScans{} LUNA16 evaluation scans, restoring the band raises the competition performance metric (CPM) of a two-scale 3D ranker from \BallCpm\% to \BandCpm\% ($+4.03$ points; $+4.21$ points for a second training seed), closing \PrimaryRecovery\% and \RepeatRecovery\% of the gap between the ball-only and the full-field ranker. To identify the source of this gain, we compare the band with weaker forms of access to the same exterior region and relate the gains to annotated lesion extent. Our contributions are threefold:
-(i)~a visibility intervention that changes the native evidence available to a ranker while keeping the proposals, the input, the network and the training fixed (Sec.~\ref{sec:visibility});
-(ii)~matched comparisons showing that exposing the same image network only to the native voxels behind 384 sparse samples of the band recovers less than half of its gain (Sec.~\ref{sec:source_result}), and that sparse readouts with direction-aware attention gain at most about one CPM point (Sec.~\ref{sec:spatial_result}); and
-(iii)~an anatomy-based analysis showing that the gains concentrate in the roughly one sixth of lesions whose annotated tissue the band reaches (Sec.~\ref{sec:anatomy_result}), with a consistent effect for a second 3D architecture (Sec.~\ref{sec:breadth_result}).
-Together, these results indicate that much of the benefit of wider context at fixed proposals comes from observing more of the lesion, with any contribution of distant anatomy smaller and less certain.
-
-\section{Related work}
-\label{sec:related}
-
-\paragraph{False-positive reduction and context.}
-The LUNA16 challenge established a common candidate set and evaluation protocol, which made rankers directly comparable~\cite{setio2017luna16}. Multi-view 2D networks combine differently oriented planes~\cite{setio2016multiview}, and 3D networks with several receptive fields~\cite{dou2017multilevel}, nested fields of view~\cite{kim2018mgi} and end-to-end detectors~\cite{ding2017accurate,zhu2018deeplung,baumgartner2021nndetection,ardila2019endtoend} report that larger 3D context is beneficial. These works vary the patch size, the number of streams or the architecture jointly. We instead hold all of these fixed and vary only the native CT available within the same crop, which isolates the contribution of the additional evidence from that of the network design.
-
-\paragraph{Hand-crafted shape and exterior cues.}
-Hessian-based filters distinguish dot-like nodules from line-like vessels~\cite{li2003selective}, and spherical-shell features~\cite{leemput2015shell} as well as spectra of intensity profiles on spheres~\cite{ciompi2015frequencies} describe the surroundings of a candidate to separate vessels from nodules. These studies motivate our exterior band. Rather than using their sampling geometry as a feature, we use it to define what is made visible, and we compare the sparse samples with the dense region that contains them.
-
-\paragraph{Occlusion and input interventions.}
-Removing or masking parts of the input is a standard way to determine which evidence a network relies on~\cite{zeiler2014visualizing,fong2017meaningful}. Masking the input of a trained network, however, produces inputs it has never seen, and retraining under the mask avoids this distribution shift~\cite{hooker2019benchmark}. We follow the retraining approach and train and evaluate every visibility condition under its own mask. Such analyses are particularly relevant in medical imaging, where networks can exploit unintended cues~\cite{geirhos2020shortcut,zech2018variable} and the effective receptive field may be considerably smaller than the nominal one~\cite{luo2016erf}.
-
-\paragraph{Set and attention readouts.}
-Permutation-invariant pooling summarizes a set of measurements without imposing an order~\cite{zaheer2017deep}, and set attention adds learned interactions between elements~\cite{lee2019set,wang2018nonlocal}. We use a set-attention head with and without a fixed bias that encodes the angle between sample directions, in order to determine whether the relative geometry of the samples, which a pooled readout discards, accounts for their lower performance.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/visibility.pdf}
-  \caption{\textbf{Visibility conditions.} (a)~The four image conditions at one proposal (cross), on a synthetic phantom with an illustrative native spacing of $0.70\times0.70\times1.25\mm$, drawn to scale. Blue: the $10\mm$ ball $B(p)$. Teal: the native voxels $U(p)$ that the 384 sparse samples are interpolated from. Orange: the band $A(p)$, the shell that contains all of $U(p)$. Hatched: hidden voxels, set to air. (b)~Schematic of the sparse samples (not to scale; created in BioRender, labels added): on both ends of each of 96 axes, one sample at the inner radius $r_N$ and one at the outer radius $r_F$ (Eq.~\eqref{eq:radii}); 12 axes are shown. Their values feed separate readout heads, not the image network. (c)~A sample (diamond) between a visible voxel and a hidden one: masking native voxels before trilinear resampling means the hidden voxel can only contribute the value of air.}
-  \label{fig:visibility}
-\end{figure*}
-
-\input{methods}
-\input{results}
-\input{discussion}
+\input{sec/0_abstract}
+\input{sec/1_intro}
+\input{sec/2_method}
+\input{sec/3_results}
+\input{sec/4_discussion}
 
 \section*{LLM Usage Statement}
 \input{LLM_Usage_Statement.txt}
 
-{\small
-\bibliographystyle{ieeenat_fullname}
-\bibliography{references}
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{main}
 }
+
+% The supplementary material is compiled separately from supplement.tex
+% (it can also be appended here with \input{sec/X_suppl}; delete those pages before submission).
+
 \end{document}
