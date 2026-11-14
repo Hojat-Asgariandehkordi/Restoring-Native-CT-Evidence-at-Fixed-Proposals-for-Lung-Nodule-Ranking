@@ -99,3 +99,10 @@ Applied the group's finalization brief limited to figures and minor structure/pa
    - a coverage-versus-continuity control: the same number of visible exterior voxels as the native-source arm, but contiguous (for example a thinner band), to separate the two explanations in Sec. 5.2;
    - FROC bootstrap bands for Fig. 3b (only point curves are in the aggregate);
    - a few qualitative examples (gained and lost lesions with ball/band crops) for a figure, if patient-image display is allowed.
+
+## Compaction pass (authors' requests)
+- **Fig. 1(a):** the 2×2 grid became one row of four panels: vessel (ball only, full view) and off-centre nodule (ball only, full view). (b) is unchanged in content but smaller. The caption is shorter.
+- **Fig. 2:** now a single row of the four image conditions. (b), the BioRender sample schematic, and (c), the 1D masking example, were removed. The samples are described in Sec. 3.4, and the masking example is now a sentence in Sec. 3.2: weights 0.625/0.375 on −500/+100 HU give −275 HU if masked after resampling and −687.5 HU when masked first. The intro now points to Sec. 3.2 instead of Fig. 2c.
+- **Fig. 7:** now a compact 1×3 row: (a) by size, (b) seed 1, (c) seed 2, with a shared legend below. The unclear groups "band reaches / never reaches lesion" were renamed **"lesion extends into band" (n = 72) / "lesion does not reach band" (n = 377)** in the figure, Tab. 3, Sec. 4 and Sec. 5.4, and the caption defines them: the band of a matching proposal contains the lesion's annotated tissue, so restoring the band shows part of the lesion itself.
+- **Discussion + Conclusion:** merged into a single short "Discussion and conclusion" (2 paragraphs, about 380 words instead of about 885): the answer, the sparse-access result, where the gains occur and the implication, then the limitations and next steps.
+- **Length:** the main text now ends on page 8 (10 PDF pages with the LLM statement and references).

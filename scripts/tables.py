@@ -47,7 +47,7 @@ L += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
 
 # ---- Absolute sensitivity at 1 FP/scan by anatomy group -> tables/anatomy_main.tex
 # Source: anatomy/by_seed/<seed>/capped/<group>/{ball,band}[3]  (index 3 = 1 FP/scan)
-G = [("any_overlap", "Reaches lesion"), ("never_overlap", "Never reaches"),
+G = [("any_overlap", "Extends into band"), ("never_overlap", "Does not reach band"),
      ("unlinked", "No contours"), ("linked_without_proposal", "No proposal")]
 L = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{3.5pt}",
      r"\caption{Sensitivity (\%) at a global 1 FP/scan by anatomy group, for the ball and band rankers. "
