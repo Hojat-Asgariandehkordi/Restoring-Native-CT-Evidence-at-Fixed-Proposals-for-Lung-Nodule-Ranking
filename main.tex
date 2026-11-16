@@ -27,33 +27,38 @@
 \title{Restoring Native CT Evidence at Fixed Proposals for Lung Nodule Ranking}
 
 %%%%%%%%% AUTHORS - PLEASE UPDATE
-% Hidden automatically in review mode ("Anonymous CVPR submission" is printed instead).
-% TODO (camera-ready): replace with the author list and affiliations.
 \author{First Author\\
 Institution1\\
 Institution1 address\\
 {\tt\small firstauthor@i1.org}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+\and
+Second Author\\
+Institution2\\
+First line of institution2 address\\
+{\tt\small secondauthor@i2.org}
 }
 
 \begin{document}
 \maketitle
-
-\input{sec/0_abstract}
+\input{sec/0_abstract}    
 \input{sec/1_intro}
 \input{sec/2_method}
 \input{sec/3_results}
 \input{sec/4_discussion}
-
 \section*{LLM Usage Statement}
 \input{LLM_Usage_Statement.txt}
-
 {
     \small
     \bibliographystyle{ieeenat_fullname}
     \bibliography{main}
 }
 
-% The supplementary material is compiled separately from supplement.tex
-% (it can also be appended here with \input{sec/X_suppl}; delete those pages before submission).
+% WARNING: do not forget to delete the supplementary pages from your submission 
+% \input{sec/X_suppl}
 
 \end{document}

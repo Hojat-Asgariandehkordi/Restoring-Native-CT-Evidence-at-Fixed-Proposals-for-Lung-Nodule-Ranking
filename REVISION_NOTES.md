@@ -106,3 +106,11 @@ Applied the group's finalization brief limited to figures and minor structure/pa
 - **Fig. 7:** now a compact 1×3 row: (a) by size, (b) seed 1, (c) seed 2, with a shared legend below. The unclear groups "band reaches / never reaches lesion" were renamed **"lesion extends into band" (n = 72) / "lesion does not reach band" (n = 377)** in the figure, Tab. 3, Sec. 4 and Sec. 5.4, and the caption defines them: the band of a matching proposal contains the lesion's annotated tissue, so restoring the band shows part of the lesion itself.
 - **Discussion + Conclusion:** merged into a single short "Discussion and conclusion" (2 paragraphs, about 380 words instead of about 885): the answer, the sparse-access result, where the gains occur and the implication, then the limitations and next steps.
 - **Length:** the main text now ends on page 8 (10 PDF pages with the LLM statement and references).
+
+## Template made identical to the CVPR 2027 author kit (re-checked against `author-kit-CVPR2027-v1-latex.zip`)
+- `cvpr.sty`, `ieeenat_fullname.bst`: byte-identical to the kit (re-verified).
+- `main.tex`: now the kit's `main.tex` verbatim. The only edits are the title, the section `\input`s and the LLM Usage Statement; the kit's comments, two-author placeholder block (hidden in review mode) and the closing `% \input{sec/X_suppl}` lines are restored.
+- Supplement: its content now lives in the kit's `sec/X_suppl.tex`, which opens exactly like the kit's (`\clearpage`, `\setcounter{page}{1}`, `\maketitlesupplementary`). `supplement.tex` is the kit's `main.tex` with the paper body replaced by `\input{sec/X_suppl}`, so the supplement still compiles as a separate PDF.
+- `preamble.tex`: the kit's 51 lines unchanged; the paper's packages and macros are appended below, where the kit says to add them.
+- Added the kit's `rebuttal.tex` unchanged.
+- Page size, text block, review header and fonts match the kit's compiled example. The main text is word-for-word unchanged and ends on page 8 (9 PDF pages with the LLM statement and references); the supplement is 11 pages.
