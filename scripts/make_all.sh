@@ -7,4 +7,4 @@ python3 repro/paper_assets.py --paper .
 python3 scripts/tables.py
 python3 scripts/fig_schematic.py
 python3 scripts/fig_results.py
-latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -outdir=build main.tex
+latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -outdir=build main.tex supplement.tex
