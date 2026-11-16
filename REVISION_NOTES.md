@@ -114,3 +114,16 @@ Applied the group's finalization brief limited to figures and minor structure/pa
 - `preamble.tex`: the kit's 51 lines unchanged; the paper's packages and macros are appended below, where the kit says to add them.
 - Added the kit's `rebuttal.tex` unchanged.
 - Page size, text block, review header and fonts match the kit's compiled example. The main text is word-for-word unchanged and ends on page 8 (9 PDF pages with the LLM statement and references); the supplement is 11 pages.
+## Blue-review merge (BLUE_REVIEW_33391_v2, corrected inventory, 2026-11-15)
+Blue text = colour (0,0,1) in the authors' v2 PDFs. Most blue passages (pairing controls in the method, the three-view 2D model, the Tab. 1 three-view row, the pairing and synthetic-task numbers, every blue supplement table row) were already in this version; there the blue only highlights them. Minimal edits were made, and the collaborator's Overleaf edits (merged paragraphs, shorter LLM statement) were kept.
+
+Adopted (main):
+- **Seed-2 attention heads (correction):** they selected epoch 4 and **tie** the ball-only ranker at all seven pooled operating points, but their scores and rankings differ, so paired differences need not vanish; the seed-2 geometry and width contrasts are inconclusive. This replaces "output identical" in Sec. 5.3, the Fig. 6 caption, the Tab. 2 footnote ("Selected epoch 4; pooled CPM equals ball-only, but scores differ") and the conclusion.
+- **Per-lesion tally (Sec. 5.4):** 28 gained / 9 lost at the pool's 1 FP/scan thresholds (+4.12 S1), and 28 / 11 (+3.69) at the calibration-fixed thresholds; 12 of the gained lesions have the band reaching the contour.
+- **Exploratory size/displacement audit:** one sentence in Sec. 5.4 (common support only among large lesions; consistent with the localization but does not identify lesion tissue as the cause), with full detail in the new **supplement Sec. S7 + Tab. S21**. The cell table was transcribed from the authors' v2 supplement, so it is not regenerated from `repro/aggregate.json`.
+- **Three-view 2D:** "both intervals include zero" (Fig. 3 caption) and "gain is inconclusive" (Tab. 1 caption); Sec. 5.5 already gives +1.27 [−0.71, 3.58], 37%.
+- **Harm margin (Sec. 5.6, correction):** the seed-2 interval at 1/8 FP/scan below −2 points refers to the paired head **added on top of the morphology score**, not to the comparison with the full-field ranker.
+
+Adopted (supplement): the S4 seed-9143 paragraph (pooled sensitivities coincide but the 301,306 aligned scores differ; epoch 4 is not zero-residual initialization; why nonzero bootstrap intervals are compatible with equal CPM); and the S3 sentence "for the endpoint increment over selected morphology …".
+
+Space: to keep the body on 8 pages, the 5.3 seed-2 sentence, the Fig. 3 caption note and the conclusion's last sentence were tightened. The body ends on page 8; the LLM statement and references start on page 9 (10 PDF pages). Supplement: 13 pages.

@@ -8,7 +8,7 @@ ROWS = [("3691", "Two-scale 3D, seed 1"), ("9143", "Two-scale 3D, seed 2"),
 
 lines = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{4.5pt}",
          r"\caption{Absolute CPM (\%) on the 353 evaluation scans for each visibility condition. "
-         r"Recovery is the share of the ball-to-full gap closed by the band. Paired effects with "
+         r"Recovery is the share of the ball-to-full gap closed by the band. The three-view 2D gain is inconclusive (Sec.~\ref{sec:breadth_result}). Paired effects with "
          r"95\% intervals are in Fig.~\ref{fig:restoration}a.}",
          r"\label{tab:visibility}",
          r"\begin{tabular}{@{}lrrrr@{}}", r"\toprule",
@@ -29,7 +29,7 @@ SP = [("ball", "Ball only (frozen)"), ("pooled", "Compact head, initial fit"), (
 deg = {s: set(D.degenerate_heads(s)) for s in D.SEEDS}
 L = [r"\begin{table}[t]", r"\centering", r"\small", r"\setlength{\tabcolsep}{4pt}",
      r"\caption{Absolute CPM and $S_1$ (\%) of every readout of the 384 sparse samples, with the image "
-     r"conditions for reference. $^\ast$Selected the first checkpoint; scores identical to the ball-only ranker.}",
+     r"conditions for reference. $^\ast$Selected epoch 4; pooled CPM equals ball-only, but scores differ.}",
      r"\label{tab:sparse}", r"\begin{tabular}{@{}lrrrr@{}}", r"\toprule",
      r" & \multicolumn{2}{c}{Seed 1} & \multicolumn{2}{c}{Seed 2} \\",
      r"\cmidrule(lr){2-3}\cmidrule(l){4-5}", r"Readout & CPM & $S_1$ & CPM & $S_1$ \\", r"\midrule"]
