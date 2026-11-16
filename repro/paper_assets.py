@@ -347,7 +347,7 @@ def main_tables(data, folder):
         a += r"$^\dagger$" if "cpm_adjusted" in effect else ""
         rows.append([label, *[number(x["cpm"]) for x in methods], a,
                      ci(effect["at_1"]), f"{100 * fraction:.0f}\\%"])
-    table(folder, "visibility", "visibility",
+    table(folder, "visibility", "visibility_supp",
           r"Visibility on 353 reused scans. Absolute CPM is in percent. Paired band-minus-ball effects are in points. "
           r"$^\dagger$ denotes the primary CPM interval adjusted across three locked contrasts. Other intervals are "
           r"pointwise 95\%. Recovery is the band gain divided by the observed full-minus-ball CPM gap for each fit.",

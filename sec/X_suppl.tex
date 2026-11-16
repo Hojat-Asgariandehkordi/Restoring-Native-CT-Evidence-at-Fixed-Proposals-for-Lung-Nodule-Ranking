@@ -1,8 +1,14 @@
 \clearpage
 \setcounter{page}{1}
 \maketitlesupplementary
+\setcounter{section}{0}
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\setcounter{equation}{0}
+\setcounter{algorithm}{0}
 \renewcommand{\thesection}{S\arabic{section}}
 \renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
 
 \section{Cohort, roles and external eligibility}
 \label{supp:roles}
@@ -86,12 +92,6 @@ For the 449 lesions, calibration-fixed gains are $+3.79\,[1.13,\,6.51]$ and $+2.
 
 Table~\ref{tab:size_displacement} retains every cell, including empty and single-lesion cells. The two populated common-support cells are both $\ge10\mm$: at displacement $<1.5\mm$, the counts of lesions that do not reach and that extend into the band are 24/36 (median proposal counts 1/3.5); at 1.5--$<3\mm$, they are 11/30 (1/2). In the first cell, the gains of lesions extending into the band are $13.89\,[0,\,28.21]$ and $5.56\,[-5.00,\,17.86]$ points, with zero gains for the others; in the second, they are $13.33\,[-4.17,\,30.77]$ and $20.00\,[3.45,\,36.00]$, versus 0 and $9.09\,[0,\,30.77]$. These cells do not establish a consistently separated two-seed effect or remove proposal-count confounding. Intervals use 4,000 paired patient-cluster percentile resamples over 353 subjects, conditional on fixed scores and cutoffs and unadjusted for multiplicity; replicates with a zero denominator are omitted. No adjusted causal effect is estimated, because overlap support is sparse and proposal counts remain imbalanced.
 
-\section*{LLM Usage Statement}
-\input{LLM_Usage_Statement.txt}
-{\small
-\bibliographystyle{ieeenat_fullname}
-\bibliography{main}
-}
 
 \onecolumn
 \section{Detailed results tables}
