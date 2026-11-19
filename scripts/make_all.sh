@@ -4,6 +4,7 @@
 # scripts/ then overwrites the figures with the revised Times-font versions.
 set -e
 python3 repro/paper_assets.py --paper .
+python3 scripts/polish_supp_tables.py
 python3 scripts/tables.py
 python3 scripts/fig_schematic.py
 python3 scripts/fig_results.py
