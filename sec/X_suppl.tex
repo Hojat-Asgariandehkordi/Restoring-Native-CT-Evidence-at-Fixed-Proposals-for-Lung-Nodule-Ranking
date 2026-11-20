@@ -9,8 +9,17 @@
 \renewcommand{\thesection}{S\arabic{section}}
 \renewcommand{\thetable}{S\arabic{table}}
 \renewcommand{\thefigure}{S\arabic{figure}}
+% Let the many results tables stack at page tops in the two-column layout.
+\renewcommand{\topfraction}{0.95}\renewcommand{\dbltopfraction}{0.95}\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}\renewcommand{\dblfloatpagefraction}{0.8}
+\setcounter{topnumber}{4}\setcounter{dbltopnumber}{4}\setcounter{totalnumber}{6}
+% Pack tables at the top of table-only pages with fixed gaps instead of spreading them.
+\makeatletter
+\setlength{\@fptop}{0pt}\setlength{\@fpsep}{14pt}\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{14pt}\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatother
 
-This supplement complements the main paper with the details needed to assess and reproduce its results. Sec.~\ref{supp:roles} describes the cohort and data roles and our search for an untouched external cohort. Sec.~\ref{supp:construction} gives the implementation checks of masking, the architectures, training and the controls of the compact head. Sec.~\ref{supp:locked} details the evaluation protocol, the uncertainty estimates and the comparisons on top of the full-field ranker. Secs.~\ref{supp:new}--\ref{supp:repro} cover the follow-up comparisons, the anatomy groups and earlier results on the same benchmark, and Sec.~\ref{supp:sizeaudit} reports an exploratory audit by lesion size and proposal displacement. Sec.~\ref{supp:discussion} extends the discussion of the main paper, and Sec.~\ref{supp:tables} collects all detailed results tables. Seeds~1 and~2 of the main paper correspond to training seeds 3691 and 9143.
+This supplement complements the main paper with the details needed to assess and reproduce its results. Sec.~\ref{supp:roles} describes the cohort and data roles and our search for an untouched external cohort. Sec.~\ref{supp:construction} gives the implementation checks of masking, the architectures, training and the controls of the compact head. Sec.~\ref{supp:locked} details the evaluation protocol, the uncertainty estimates and the comparisons on top of the full-field ranker. Secs.~\ref{supp:new}--\ref{supp:repro} cover the follow-up comparisons, the anatomy groups and earlier results on the same benchmark, and Sec.~\ref{supp:sizeaudit} reports an exploratory audit by lesion size and proposal displacement. Sec.~\ref{supp:tables} collects all detailed results tables. Seeds~1 and~2 of the main paper correspond to training seeds 3691 and 9143.
 
 \section{Cohort, roles and external eligibility}
 \label{supp:roles}
@@ -97,55 +106,26 @@ For the 449 lesions, the calibration-fixed gains are $+3.79\,[1.13,\,6.51]$ and 
 
 Tab.~\ref{tab:size_displacement} reports every cell, including empty and single-lesion cells. Both cells with substantial numbers of lesions in each group contain lesions of at least $10\mm$. At a displacement below $1.5\mm$, 24 lesions do not reach and 36 extend into the band (median proposal counts 1 and 3.5); at 1.5--$<3\mm$, the counts are 11 and 30 (medians 1 and 2). In the first cell, lesions extending into the band gain $13.89\,[0,\,28.21]$ and $5.56\,[-5.00,\,17.86]$ points and the other lesions gain nothing; in the second cell, they gain $13.33\,[-4.17,\,30.77]$ and $20.00\,[3.45,\,36.00]$ points, versus 0 and $9.09\,[0,\,30.77]$. These cells neither show an effect that is separated for both seeds nor remove the confounding by proposal count. Intervals use 4,000 paired percentile resamples of the 353 patients, conditional on fixed scores and cutoffs and unadjusted for multiplicity, and resamples with a zero denominator are omitted. We estimate no adjusted causal effect, because the common support is sparse and the proposal counts remain imbalanced.
 
-\section{Further discussion and limitations}
-\label{supp:discussion}
-
-\paragraph{Coverage versus continuity.}
-Sparse access recovers considerably less than the band, regardless of how it is read: exposing the exact voxels behind the 384 samples to the image network closes less than half of the gap, and attention over the sample directions adds little to a late readout. Observing a few well-chosen locations, even together with their geometry, is therefore no substitute for observing a contiguous region. Because the native-source condition changes the number and the contiguity of the visible voxels together, varying their arrangement at a fixed count is the natural next experiment to separate the two.
-
-\paragraph{What the band adds.}
-The band is defined around the proposal rather than the lesion, so large lesions and off-centre proposals place lesion tissue inside it, and these are the cases with the largest gains under a grouping fixed before scoring. A $10\mm$ ball contains most small nodules entirely: all lesions below $6\mm$ belong to the group that does not reach the band, whose gain at 1~FP/scan is small. For lesions of at least $10\mm$, the ball cuts through the nodule, and two thirds of them extend into the band. Large lesions also attract more proposals: the 72 lesions that extend into the band have 221 matching proposals, whereas every other lesion with a proposal has exactly one, and many of these proposals lie away from the lesion centre. The advantage reported for larger context may therefore partly be a coverage advantage for large lesions, which suggests stratifying analyses of context by lesion size and choosing patch sizes from the size distribution of the target lesions. Small benefits from beyond the annotated lesion remain compatible with the data, especially at higher FP rates, and part of the FROC change may come from better rejection of false proposals rather than a changed appearance of true ones; attributing gains to vessels, attachments or lesion margins would require further interventions or anatomical labels.
-
-\paragraph{Limitations.}
-Masking introduces artificial air boundaries to which each model can adapt, and the native-source and band conditions differ not only in the voxels they expose but also in how these boundaries appear after resampling. We studied a single band, chosen to enclose the support of the samples; other radii and equal-volume regions remain to be explored. The sparse heads use unoriented axis pairs and a single fusion point, so their results are specific to this design, and since three seed-2 attention heads tie the ball-only ranker in CPM (Sec.~\ref{supp:new}), the evidence on sample geometry rests mainly on seed~1. The native-source and single-stream comparisons use one training seed each, and patient-level intervals do not capture variation across training runs. Finally, all models share one candidate generator on a reused benchmark. A band condition with the contoured lesion voxels set to air would turn the anatomy analysis into a direct intervention, and an untouched full-scan cohort with a fixed proposal stream would test the generality of our findings.
-
-\onecolumn
 \section{Detailed results tables}
 \label{supp:tables}
-The following tables report all absolute results, paired effects and controls. Unless stated otherwise, CPM and sensitivities are in percent, effects are in points, and intervals are pointwise 95\% patient-level bootstrap intervals.
+The following tables report all absolute results, paired effects and controls. Unless stated otherwise, CPM and sensitivities are in percent, effects are in points, and intervals are pointwise 95\% patient-level bootstrap intervals. Tabs.~\ref{tab:visibility_supp}--\ref{tab:paired_rates} give the absolute visibility results and the paired operating points; Tabs.~\ref{tab:consistency}--\ref{tab:transfer} the consistency checks and transferred cutoffs; Tabs.~\ref{tab:locked_factorial}--\ref{tab:sham_spread} the compact-head factorial, the pairing controls and the full-field comparisons; Tabs.~\ref{tab:new_dev}--\ref{tab:attention_absolute} the follow-up development results and the sparse-head comparisons; and Tabs.~\ref{tab:anatomy_counts}--\ref{tab:anatomy_uncapped} the anatomy groups, followed by the per-lesion decisions (Tab.~\ref{tab:decision}), the earlier comparisons (Tab.~\ref{tab:historical}) and the size/displacement audit (Tab.~\ref{tab:size_displacement}).
 
-\subsection*{Absolute visibility results and paired operating points}
 \input{tables/visibility}
 \input{tables/anatomy_one}
 \input{tables/absolute}
 \input{tables/paired_rates}
-
-\clearpage
-\subsection*{Consistency checks and transferred cutoffs}
 \input{tables/consistency}
 \input{tables/transfer}
-
-\clearpage
-\subsection*{Compact-head factorial, pairing controls and full-field comparisons}
 \input{tables/locked_factorial}
 \input{tables/locked_compact}
 \input{tables/locked_practical}
 \input{tables/sham_spread}
-
-\clearpage
-\subsection*{Follow-up development results and sparse-head comparisons}
 \input{tables/new_dev}
 \input{tables/attention_contrasts}
 \input{tables/attention_gains}
-
-\clearpage
-\subsection*{Absolute sparse-head results and anatomy groups}
 \input{tables/attention_absolute}
 \input{tables/anatomy_counts}
 \input{tables/anatomy_capped}
-
-\clearpage
-\subsection*{Anatomy without the mark cap, per-lesion decisions and earlier comparisons}
 \input{tables/anatomy_uncapped}
 \input{tables/decision}
 \input{tables/historical}

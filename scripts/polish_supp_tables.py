@@ -28,7 +28,7 @@ CAPTIONS = {
     "anatomy_capped": r"Band-minus-ball sensitivity (points) by anatomy group at each FP/scan rate, with the 100-mark cap. The last row of each seed is the difference of the two group gains. Each cell gives the estimate above its pointwise 95\% interval.",
     "anatomy_uncapped": r"As Tab.~\ref{tab:anatomy_capped}, without the 100-mark cap.",
     "decision": r"Per-lesion decisions of seed 1 and seed 2 at the empirical and transferred cutoffs (descriptive). The last two columns count lesions whose decision mark before or after restoring the band has a band that reaches the majority-reader contour.",
-    "historical": r"Earlier comparisons with classical half-axis readouts and visibility on the same benchmark. Pointwise 95\% patient-level intervals.",
+    "historical": r"Earlier comparisons on the same benchmark: classical half-axis readouts with fixed or tuned settings, and visibility. Pointwise 95\% patient-level intervals.",
 }
 
 PHRASES = [
@@ -59,11 +59,11 @@ PHRASES = [
     ("Endpoint minus scalar at embedding", "Endpoints $-$ scalar, embedding"),
     ("Endpoint minus scalar at logit", "Endpoints $-$ scalar, logit"),
     ("Endpoint gain with", "Endpoint gain,"), ("Scalar gain with", "Scalar gain,"),
-    ("Fixed chords minus raw Hessian", "Fixed half-axes $-$ raw Hessian"),
-    ("Fixed chords minus shuffle", "Fixed half-axes $-$ shuffled"),
-    ("Tuned chords minus gray maximum", "Tuned half-axes $-$ grey max."),
-    ("Tuned chords minus shuffle", "Tuned half-axes $-$ shuffled"),
-    ("Archived visibility-by-chord interaction", "Visibility $\\times$ half-axis interaction"),
+    ("Fixed chords minus raw Hessian", "Fixed $-$ raw Hessian"),
+    ("Fixed chords minus shuffle", "Fixed $-$ shuffled"),
+    ("Tuned chords minus gray maximum", "Tuned $-$ grey max."),
+    ("Tuned chords minus shuffle", "Tuned $-$ shuffled"),
+    ("Archived visibility-by-chord interaction", "Visibility $\\times$ half-axis"),
     ("Sham path", "Shuffled-pair head"), ("Quarantined", "Excluded (repeated patient)"),
     ("Readout development", "Readout development"), ("Fitted architecture", "Architecture"),
     ("& Arm &", "& Condition &"), ("readout dev.", "readout dev."),
@@ -85,6 +85,19 @@ def seeds(s):
     return s
 
 
+COLUMN = {"roles", "decision", "historical", "size_displacement"}  # fit one column (237 pt)
+
+
+def two_column(name, s):
+    """Column-width tables as table, wider ones as full-width table*; both float to page tops."""
+    env = "table" if name in COLUMN else "table*"
+    s = re.sub(r"\\begin\{table\*?\}(\[[^\]]*\])?", lambda m: "\\begin{" + env + "}[!t]", s)
+    s = re.sub(r"\\end\{table\*?\}", lambda m: "\\end{" + env + "}", s)
+    if name in COLUMN and "footnotesize" not in s:
+        s = s.replace("\\centering", "\\centering\n\\footnotesize\n\\setlength{\\tabcolsep}{" + ("2pt" if name == "historical" else "4pt") + "}", 1)
+    return s
+
+
 def main():
     for name, cap in CAPTIONS.items():
         p = T / f"{name}.tex"
@@ -94,7 +107,9 @@ def main():
         for a, b in PHRASES:
             s = s.replace(a, b)
         s = seeds(s)
-        p.write_text(s)
+        p.write_text(two_column(name, s))
+    p = T / "size_displacement.tex"
+    p.write_text(two_column("size_displacement", p.read_text()))
 
 
 if __name__ == "__main__":
